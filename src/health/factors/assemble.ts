@@ -3,6 +3,7 @@ import type { TokenMarketSnapshot } from "@/lib/types/token";
 import type { HealthFactor } from "./types";
 import { scoreLiquidityRatio, scoreLiquidityUsd } from "./liquidity";
 import { scoreTape1h, scoreTape5m } from "./tape";
+import { scoreFlow } from "./flow";
 import {
   scoreAuthorityPair,
   scoreTopHolderConcentration,
@@ -131,13 +132,21 @@ export function assembleHealthFactors(
         ),
   );
 
+  const flow = scoreFlow(
+    market.periods.h1.buys,
+    market.periods.h1.sells,
+    "1h",
+  );
+
   factors.push(
-    unavailableFactor(
-      "flow",
-      "Flow",
-      "FLOW",
-      "Reliable normalized buy/sell flow data is not available in Health v0.1.",
-    ),
+    flow
+      ? availableFactor("flow", "1h buy/sell flow", "FLOW", flow, "score")
+      : unavailableFactor(
+          "flow",
+          "1h buy/sell flow",
+          "FLOW",
+          "1h buy/sell counts are unavailable or too few to judge.",
+        ),
   );
 
   const authority = scoreAuthorityPair(
