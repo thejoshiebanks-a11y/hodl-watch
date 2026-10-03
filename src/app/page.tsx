@@ -4,6 +4,7 @@ import { useState } from "react";
 import type { ScanResponse, ScanSuccess } from "@/lib/types/scan";
 import { SolanaMintSchema } from "@/lib/validation/solana";
 import { summarizeHealthGroups } from "@/health/score/groups";
+import { PriceChart } from "@/components/PriceChart";
 
 const emptyBadges = [
   { label: "QUOTE", value: "—" },
@@ -125,7 +126,7 @@ export default function Home() {
             </p>
 
             <div className="mt-8 flex max-w-2xl gap-2">
-              <input
+              <input suppressHydrationWarning
                 type="text"
                 value={mint}
                 onChange={(event) => setMint(event.target.value)}
@@ -439,6 +440,8 @@ export default function Home() {
             </div>
           </div>
         </section>
+
+        <PriceChart pool={snapshot?.market.pairAddress ?? null} />
 
         <section className="grid gap-4 border-t border-white/8 pt-6 md:grid-cols-3">
           <div className="rounded-xl border border-white/6 bg-white/[0.018] p-4">
