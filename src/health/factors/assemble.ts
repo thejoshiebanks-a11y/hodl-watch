@@ -52,7 +52,7 @@ export function assembleHealthFactors(
 ): HealthFactor[] {
   const factors: HealthFactor[] = [];
 
-  const tape5m = scoreTape5m(market.priceChange5mPct);
+  const tape5m = scoreTape5m(market.periods.m5.priceChangePct);
 
   factors.push(
     tape5m
@@ -71,7 +71,7 @@ export function assembleHealthFactors(
         ),
   );
 
-  const tape1h = scoreTape1h(market.priceChange1hPct);
+  const tape1h = scoreTape1h(market.periods.h1.priceChangePct);
 
   factors.push(
     tape1h

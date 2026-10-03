@@ -398,8 +398,8 @@ export default function Home() {
                       24h Volume
                     </p>
                     <p className="mt-1 text-sm text-zinc-300">
-                      {snapshot.market.volume24hUsd !== null
-                        ? `$${snapshot.market.volume24hUsd.toLocaleString()}`
+                      {snapshot.market.periods.h24.volumeUsd !== null
+                        ? `$${snapshot.market.periods.h24.volumeUsd.toLocaleString()}`
                         : "N/A"}
                     </p>
                   </div>
@@ -409,8 +409,8 @@ export default function Home() {
                       1h
                     </p>
                     <p className="mt-1 text-sm text-zinc-300">
-                      {snapshot.market.priceChange1hPct !== null
-                        ? `${snapshot.market.priceChange1hPct}%`
+                      {snapshot.market.periods.h1.priceChangePct !== null
+                        ? `${snapshot.market.periods.h1.priceChangePct}%`
                         : "N/A"}
                     </p>
                   </div>
