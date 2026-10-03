@@ -183,10 +183,10 @@ export default function Home() {
                   </p>
                   {snapshot && (
                     <div className="mt-2 flex items-center gap-2 text-[9px] uppercase tracking-[0.14em] text-zinc-600">
-                      <span>Health v0.1</span>
+                      <span>Health v0.1.1</span>
                       <span className="text-zinc-800">•</span>
                       <span>
-                        {Math.round(snapshot.health.coverage * 100)}% coverage
+                        {Math.round(snapshot.health.coverage * 100)}% of checks observed
                       </span>
                     </div>
                   )}
@@ -317,7 +317,11 @@ export default function Home() {
                           detail = "Liquidity unavailable";
                         }
                       } else if (summary.group === "FLOW") {
-                        detail = "Buy/sell flow data unavailable";
+                        const flowFactor = available.find((factor) => factor.key === "flow");
+                        const h1 = snapshot.market.periods.h1;
+                        detail = flowFactor
+                          ? `${h1.buys ?? "?"} buys · ${h1.sells ?? "?"} sells (1h)`
+                          : "Buy/sell flow data unavailable";
                       } else if (summary.group === "STRUCTURE") {
                         const authority = snapshot.identity.mintAuthority;
                         const freeze = snapshot.identity.freezeAuthority;
@@ -499,10 +503,43 @@ export default function Home() {
                 Top holder
               </p>
               <p className="mt-1 text-sm text-zinc-400">
-                {snapshot?.identity.topHolderPct !== null &&
-                snapshot?.identity.topHolderPct !== undefined
-                  ? `${snapshot.identity.topHolderPct}%`
-                  : "N/A"}
+                {formatPct(snapshot?.identity.topHolderPct, 2)}
+              </p>
+            </div>
+
+            <div>
+              <p className="text-[9px] uppercase tracking-[0.14em] text-zinc-600">
+                LP locked
+              </p>
+              <p className="mt-1 text-sm text-zinc-400">
+                {formatPct(snapshot?.identity.lpLockedPctWeighted)}
+              </p>
+            </div>
+
+            <div>
+              <p className="text-[9px] uppercase tracking-[0.14em] text-zinc-600">
+                Insider supply
+              </p>
+              <p className="mt-1 text-sm text-zinc-400">
+                {formatPct(snapshot?.identity.insiderSupplyPct)}
+              </p>
+            </div>
+
+            <div>
+              <p className="text-[9px] uppercase tracking-[0.14em] text-zinc-600">
+                Launchpad
+              </p>
+              <p className="mt-1 text-sm text-zinc-400">
+                {snapshot?.identity.launchpad ?? "N/A"}
+              </p>
+            </div>
+
+            <div>
+              <p className="text-[9px] uppercase tracking-[0.14em] text-zinc-600">
+                Pools
+              </p>
+              <p className="mt-1 text-sm text-zinc-400">
+                {snapshot?.identity.poolCount ?? "N/A"}
               </p>
             </div>
           </div>
@@ -543,4 +580,13 @@ export default function Home() {
       </div>
     </main>
   );
+}
+
+function formatPct(
+  value: number | null | undefined,
+  digits = 1,
+): string {
+  return value === null || value === undefined || !Number.isFinite(value)
+    ? "N/A"
+    : `${value.toFixed(digits)}%`;
 }
