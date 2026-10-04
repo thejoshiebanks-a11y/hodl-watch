@@ -163,7 +163,7 @@ export function TokenView({ d, onBack }: { d: Data; onBack: () => void }) {
     ["coins", "Market cap", usd(m.marketCapUsd)],
     ["drop", "Liquidity", usd(m.liquidityUsd)],
     ["bars", "24h vol", usd(m.periods.h24.volumeUsd)],
-    ["people", "Holders", i.holderCount === null ? NA : i.holderCount.toLocaleString("en-US")],
+    ["people", "Holders", !i.holderCount ? NA : i.holderCount.toLocaleString("en-US")],
   ];
 
   const signals: [Parameters<typeof Icon>[0]["name"], string, string, string][] = [

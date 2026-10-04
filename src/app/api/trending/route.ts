@@ -25,6 +25,11 @@ function num(v: unknown): number | null {
   return Number.isFinite(n) ? n : null;
 }
 
+const pos = (v: unknown) => {
+  const n = num(v);
+  return n !== null && n > 0 ? n : null;
+};
+
 export async function GET() {
   if (cache && Date.now() - cache.at < FRESH_MS) {
     return NextResponse.json({ items: cache.items });
@@ -72,7 +77,7 @@ export async function GET() {
         name: t?.name ?? null,
         symbol: t?.symbol ?? null,
         imageUrl: image && image.startsWith("http") ? image : null,
-        marketCapUsd: num(a.market_cap_usd) ?? num(a.fdv_usd),
+        marketCapUsd: pos(a.market_cap_usd) ?? pos(a.fdv_usd),
         change24h: num(a.price_change_percentage?.h24),
       });
 

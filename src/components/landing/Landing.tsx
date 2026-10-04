@@ -157,7 +157,7 @@ function Featured({ d, onScan }: { d: Data; onScan: (m: string) => void }) {
 
   const stats: [string, string, string][] = [
     ["Liquidity", usd(m.liquidityUsd), liq === null ? "" : liq >= 7 ? "Strong" : liq >= 4 ? "Moderate" : "Thin"],
-    ["Holders", d.identity.holderCount === null ? "N/A" : compact.format(d.identity.holderCount), ""],
+    ["Holders", !d.identity.holderCount ? "N/A" : compact.format(d.identity.holderCount), ""],
     ["LP locked", lp === null ? "N/A" : `${lp.toFixed(0)}%`, "weighted"],
     ["Risk", risk, "3 checks"],
   ];
@@ -171,7 +171,7 @@ function Featured({ d, onScan }: { d: Data; onScan: (m: string) => void }) {
         <div className="flex min-w-0 items-center gap-3">
           <Avatar url={m.imageUrl ?? null} symbol={m.symbol} size={56} fallback={m.symbol === "SOL" ? <SolanaMark className="h-7 w-7" /> : undefined} />
           <div className="min-w-0">
-            <p className="truncate text-xl font-extrabold">{m.name ?? "Token"}</p>
+            <p className="truncate text-xl font-extrabold">{m.symbol === "SOL" ? "Solana" : (m.name ?? "Token")}</p>
             <p className="text-xs text-hodl-muted">${m.symbol ?? "—"}</p>
             <p className="mt-1 text-sm font-semibold">
               ${m.priceUsd === null ? "N/A" : m.priceUsd < 1 ? m.priceUsd.toPrecision(4) : m.priceUsd.toFixed(2)}
@@ -188,7 +188,7 @@ function Featured({ d, onScan }: { d: Data; onScan: (m: string) => void }) {
         {stats.map(([k, v, sub]) => (
           <div key={k} className="px-2.5">
             <p className="text-[9px] uppercase tracking-[0.08em] text-hodl-muted">{k}</p>
-            <p className="mt-0.5 text-base font-extrabold">{v}</p>
+            <p className="mt-0.5 whitespace-nowrap text-sm font-extrabold">{v}</p>
             <p className="text-[10px] text-hodl-cyan">{sub || "\u00a0"}</p>
           </div>
         ))}
@@ -212,9 +212,9 @@ function TrendRow({ t, onScan }: { t: Trend; onScan: (m: string) => void }) {
       </span>
       <span className="text-right">
         <span className="block text-sm font-bold">{usd(t.marketCapUsd)}</span>
-        <span className="block text-[10px] text-hodl-muted">MCap</span>
+        <span className="block text-[12px] font-bold"><Change v={t.change24h} /></span>
       </span>
-      <span className="w-[72px] text-right text-[13px] font-bold"><Change v={t.change24h} /></span>
+      
       <Icon name="chevron" className="h-4 w-4 text-hodl-muted" />
     </button>
   );
@@ -327,7 +327,7 @@ export function Landing({
       </header>
 
       {view === "home" && (
-        <div className="pointer-events-none absolute -top-2 right-0 z-0 w-[164px]">
+        <div className="pointer-events-none absolute -top-5 right-0 z-0 w-[150px]">
           <HeroGlobe />
         </div>
       )}
@@ -340,7 +340,7 @@ export function Landing({
               Live · Solana
             </span>
             <h1 className="mt-4 text-[clamp(28px,8.6vw,34px)] font-black leading-[1.03] tracking-tight">
-              Real-Time
+              Real Time
               <br />
               <span className="bg-gradient-to-r from-cyan-300 via-blue-400 to-violet-400 bg-clip-text text-transparent">
                 Token Intelligence
@@ -441,8 +441,8 @@ export function Landing({
               <Icon name="bolt" className="h-5 w-5" />
             </span>
             <div>
-              <p className="text-sm font-bold">Hours of research, in seconds.</p>
-              <p className="text-xs text-hodl-muted">HODL watches. You decide.</p>
+              <p className="whitespace-nowrap bg-gradient-to-r from-white to-hodl-cyan bg-clip-text text-[11px] font-extrabold uppercase tracking-[0.14em] text-transparent">Health · Observe · Detect · Live</p>
+              
             </div>
           </section>
         </div>
