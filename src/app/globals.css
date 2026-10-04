@@ -1,32 +1,34 @@
 @import "tailwindcss";
 
 @theme {
-  --color-hodl-bg: #040919;
-  --color-hodl-panel: #0b1642;
-  --color-hodl-line: rgb(90 140 255 / 0.28);
+  --color-hodl-bg: #03061a;
+  --color-hodl-panel: #09123a;
+  --color-hodl-line: rgb(70 130 255 / 0.4);
   --color-hodl-blue: #2f5bff;
   --color-hodl-cyan: #38d6ff;
-  --color-hodl-text: #eef3ff;
-  --color-hodl-muted: #8b9bcf;
+  --color-hodl-text: #f2f6ff;
+  --color-hodl-muted: #9db0e6;
 }
 
 body {
   background:
-    radial-gradient(900px 520px at 85% -5%, rgba(47, 91, 255, 0.3), transparent 60%),
-    radial-gradient(700px 500px at -10% 30%, rgba(124, 58, 237, 0.18), transparent 60%),
-    #040919;
+    radial-gradient(760px 520px at 100% -6%, rgba(56, 120, 255, 0.4), transparent 62%),
+    radial-gradient(640px 520px at -12% 28%, rgba(124, 58, 237, 0.26), transparent 62%),
+    #02051a;
   background-attachment: fixed;
-  color: #eef3ff;
+  color: #f2f6ff;
   font-family: var(--font-geist-sans), system-ui, sans-serif;
 }
 
 .hodl-card {
-  border: 1px solid rgb(90 140 255 / 0.28);
+  border: 1px solid rgb(70 130 255 / 0.38);
   border-radius: 1rem;
-  background: linear-gradient(180deg, rgba(18, 32, 92, 0.72), rgba(8, 16, 52, 0.88));
-  box-shadow: 0 12px 40px rgba(20, 50, 170, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  background: linear-gradient(180deg, rgba(11, 22, 70, 0.78), rgba(4, 8, 30, 0.92));
+  box-shadow:
+    0 14px 44px rgba(20, 60, 200, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.07);
 }
 
 .hodl-glow {
-  text-shadow: 0 0 18px rgba(56, 214, 255, 0.45);
+  text-shadow: 0 0 20px rgba(56, 214, 255, 0.5);
 }

@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useRef, useState, type CSSProperties } from "react";
+import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import type { ScanResponse, ScanSuccess } from "@/lib/types/scan";
 import { summarizeHealthGroups } from "@/health/score/groups";
 import { bandColor, riskRows } from "@/components/terminal/TokenView";
 import { HodlLogo, Icon, SolanaMark } from "@/components/terminal/Brand";
+import { HeroGlobe } from "@/components/landing/HeroGlobe";
 
 type Data = ScanSuccess["data"];
 type View = "home" | "trending" | "more";
@@ -18,8 +19,12 @@ type Trend = {
   change24h: number | null;
 };
 
+// Wrapped SOL mint (Jupiter docs).
+const FEATURED = "So11111111111111111111111111111111111111112";
+
 // Mints cross-checked against several independent public sources.
 const POPULAR = [
+  { symbol: "SOL", mint: FEATURED },
   { symbol: "BONK", mint: "DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263" },
   { symbol: "WIF", mint: "EKpQGSJtjMFqKZ9KQanSqYXRcF8fBopzLHYxdM65zcjm" },
   { symbol: "POPCAT", mint: "7GCihgDB8fe6KNjn2MYtkzZcRjQy3t9GHdC8uHYmW2hr" },
@@ -38,7 +43,7 @@ function Change({ v }: { v: number | null | undefined }) {
   );
 }
 
-function Avatar({ url, symbol, size }: { url: string | null; symbol: string | null; size: number }) {
+function Avatar({ url, symbol, size, fallback }: { url: string | null; symbol: string | null; size: number; fallback?: ReactNode }) {
   const [failed, setFailed] = useState(false);
   const box: CSSProperties = {
     width: size,
@@ -58,7 +63,7 @@ function Avatar({ url, symbol, size }: { url: string | null; symbol: string | nu
   };
   const src = url && !failed ? url.replace("width=800&height=800", "width=128&height=128") : null;
 
-  if (!src) return <div style={box}>{(symbol ?? "?").slice(0, 1).toUpperCase()}</div>;
+  if (!src) return <div style={box}>{fallback ?? (symbol ?? "?").slice(0, 1).toUpperCase()}</div>;
 
   return (
     <div style={box}>
@@ -95,6 +100,48 @@ function MiniRing({ score }: { score: number | null }) {
   );
 }
 
+function Spark({ pool }: { pool: string | null }) {
+  const [pts, setPts] = useState<number[]>([]);
+
+  useEffect(() => {
+    if (!pool) return;
+    let off = false;
+    (async () => {
+      try {
+        const r = await fetch(`/api/chart?pool=${pool}&timeframe=1h`);
+        const j = await r.json();
+        if (!off && Array.isArray(j.candles)) {
+          setPts(j.candles.slice(-24).map((c: { close: number }) => c.close));
+        }
+      } catch {
+        /* no sparkline */
+      }
+    })();
+    return () => {
+      off = true;
+    };
+  }, [pool]);
+
+  if (pts.length < 2) return null;
+  const min = Math.min(...pts);
+  const span = Math.max(...pts) - min || 1;
+  const xy = pts.map((v, i) => `${(i / (pts.length - 1)) * 160},${46 - ((v - min) / span) * 42}`);
+  const col = pts[pts.length - 1] >= pts[0] ? "#2dd4bf" : "#fb7185";
+
+  return (
+    <svg viewBox="0 0 160 50" className="h-14 w-full" preserveAspectRatio="none">
+      <defs>
+        <linearGradient id="spk" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor={col} stopOpacity=".35" />
+          <stop offset="1" stopColor={col} stopOpacity="0" />
+        </linearGradient>
+      </defs>
+      <polygon points={`0,50 ${xy.join(" ")} 160,50`} fill="url(#spk)" />
+      <polyline points={xy.join(" ")} fill="none" stroke={col} strokeWidth="2" strokeLinejoin="round" vectorEffect="non-scaling-stroke" />
+    </svg>
+  );
+}
+
 function Featured({ d, onScan }: { d: Data; onScan: (m: string) => void }) {
   const m = d.market;
   const liq = summarizeHealthGroups(d.factors).find((g) => g.group === "LIQUIDITY")?.score ?? null;
@@ -122,9 +169,9 @@ function Featured({ d, onScan }: { d: Data; onScan: (m: string) => void }) {
       </span>
       <div className="mt-3 flex items-center justify-between gap-3">
         <div className="flex min-w-0 items-center gap-3">
-          <Avatar url={m.imageUrl ?? null} symbol={m.symbol} size={56} />
+          <Avatar url={m.imageUrl ?? null} symbol={m.symbol} size={56} fallback={m.symbol === "SOL" ? <SolanaMark className="h-7 w-7" /> : undefined} />
           <div className="min-w-0">
-            <p className="truncate text-lg font-bold">{m.name ?? "Token"}</p>
+            <p className="truncate text-xl font-extrabold">{m.name ?? "Token"}</p>
             <p className="text-xs text-hodl-muted">${m.symbol ?? "—"}</p>
             <p className="mt-1 text-sm font-semibold">
               ${m.priceUsd === null ? "N/A" : m.priceUsd < 1 ? m.priceUsd.toPrecision(4) : m.priceUsd.toFixed(2)}
@@ -134,11 +181,14 @@ function Featured({ d, onScan }: { d: Data; onScan: (m: string) => void }) {
         </div>
         <MiniRing score={d.health.score} />
       </div>
-      <div className="mt-4 grid grid-cols-4 divide-x divide-white/10 rounded-xl border border-white/10 bg-black/20 py-2.5">
+      <div className="mt-3">
+        <Spark pool={m.pairAddress} />
+      </div>
+      <div className="mt-3 grid grid-cols-4 divide-x divide-white/10 rounded-xl border border-white/10 bg-black/20 py-2.5">
         {stats.map(([k, v, sub]) => (
           <div key={k} className="px-2.5">
             <p className="text-[9px] uppercase tracking-[0.08em] text-hodl-muted">{k}</p>
-            <p className="mt-0.5 text-sm font-bold">{v}</p>
+            <p className="mt-0.5 text-base font-extrabold">{v}</p>
             <p className="text-[10px] text-hodl-cyan">{sub || "\u00a0"}</p>
           </div>
         ))}
@@ -157,14 +207,14 @@ function TrendRow({ t, onScan }: { t: Trend; onScan: (m: string) => void }) {
       <span className="w-4 text-sm text-hodl-muted">{t.rank}</span>
       <Avatar url={t.imageUrl} symbol={t.symbol} size={40} />
       <span className="min-w-0 flex-1">
-        <span className="block truncate text-sm font-bold">{t.name ?? t.symbol ?? "Token"}</span>
+        <span className="block truncate text-[15px] font-extrabold">{t.name ?? t.symbol ?? "Token"}</span>
         <span className="block text-xs text-hodl-muted">${t.symbol ?? "—"}</span>
       </span>
       <span className="text-right">
-        <span className="block text-sm font-semibold">{usd(t.marketCapUsd)}</span>
+        <span className="block text-sm font-bold">{usd(t.marketCapUsd)}</span>
         <span className="block text-[10px] text-hodl-muted">MCap</span>
       </span>
-      <span className="w-16 text-right text-xs"><Change v={t.change24h} /></span>
+      <span className="w-[72px] text-right text-[13px] font-bold"><Change v={t.change24h} /></span>
       <Icon name="chevron" className="h-4 w-4 text-hodl-muted" />
     </button>
   );
@@ -196,7 +246,7 @@ export function Landing({
         const r = await fetch("/api/scan", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ mint: POPULAR[0].mint }),
+          body: JSON.stringify({ mint: FEATURED }),
         });
         const j: ScanResponse = await r.json();
         if (!off && "data" in j) setFeatured(j.data);
@@ -238,6 +288,15 @@ export function Landing({
     setTimeout(() => inputRef.current?.focus(), 80);
   }
 
+  async function pasteCA() {
+    try {
+      const text = await navigator.clipboard.readText();
+      if (text) setMint(text.trim());
+    } catch {
+      inputRef.current?.focus();
+    }
+  }
+
   const nav: [string, string, Parameters<typeof Icon>[0]["name"]][] = [
     ["Home", "home", "home"],
     ["Trending", "trending", "fire"],
@@ -259,8 +318,8 @@ export function Landing({
   );
 
   return (
-    <div className="pb-28">
-      <header className="flex items-center gap-2.5">
+    <div className="relative pb-28">
+      <header className="relative z-10 flex items-center gap-2.5">
         <HodlLogo size={38} />
         <span className="bg-gradient-to-r from-white to-hodl-cyan bg-clip-text text-xl font-extrabold tracking-[0.2em] text-transparent">
           HODL
@@ -268,57 +327,73 @@ export function Landing({
       </header>
 
       {view === "home" && (
-        <div className="mt-6 space-y-5">
-          <section className="relative">
-            <span className="inline-flex items-center gap-2 rounded-full border border-emerald-400/40 bg-emerald-400/10 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-emerald-300">
-              <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-400" />
+        <div className="pointer-events-none absolute -top-2 right-0 z-0 w-[164px]">
+          <HeroGlobe />
+        </div>
+      )}
+
+      {view === "home" && (
+        <div className="relative z-10 mt-8 space-y-5">
+          <section>
+            <span className="inline-flex items-center gap-2 rounded-full border border-emerald-400/50 bg-emerald-400/10 px-3.5 py-1.5 text-[11px] font-extrabold uppercase tracking-[0.14em] text-emerald-300">
+              <span className="h-2 w-2 animate-pulse rounded-full bg-emerald-400 shadow-[0_0_10px_#34d399]" />
               Live · Solana
             </span>
-            <h1 className="mt-4 text-[42px] font-extrabold leading-[1.05]">
+            <h1 className="mt-4 text-[clamp(28px,8.6vw,34px)] font-black leading-[1.03] tracking-tight">
               Real-Time
               <br />
-              <span className="bg-gradient-to-r from-hodl-cyan via-blue-400 to-violet-400 bg-clip-text text-transparent">
+              <span className="bg-gradient-to-r from-cyan-300 via-blue-400 to-violet-400 bg-clip-text text-transparent">
                 Token Intelligence
               </span>
             </h1>
-            <p className="mt-3 max-w-[260px] text-sm text-hodl-muted">
-              Scan any Solana token and get an explainable Health score, the chart and the evidence behind it.
+            <p className="mt-3 max-w-[310px] text-[15px] leading-snug text-slate-300/85">
+              Scan any Solana token and get an explainable Health score, a live chart and the evidence behind it.
             </p>
-            <div className="pointer-events-none absolute -right-6 top-6 h-32 w-32" aria-hidden>
-              <div className="absolute inset-3 rounded-full bg-[radial-gradient(circle_at_35%_30%,#5b8cff,#2a1a8f_55%,#0a0f3a)] shadow-[0_0_50px_rgba(79,110,255,0.6)]" />
-              <div className="absolute inset-0 rounded-full border border-hodl-cyan/40 [transform:rotateX(70deg)_rotate(-20deg)]" />
-              <div className="absolute inset-0 flex items-center justify-center">
-                <SolanaMark className="h-11 w-11" />
-              </div>
-            </div>
           </section>
 
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              onScan(mint);
-            }}
-            className="hodl-card flex items-center gap-2 p-2"
-          >
-            <Icon name="link" className="ml-2 h-5 w-5 shrink-0 text-hodl-muted" />
-            <input
-              suppressHydrationWarning
-              ref={inputRef}
-              type="text"
-              value={mint}
-              onChange={(e) => setMint(e.target.value)}
-              placeholder="Paste Solana mint address (CA)…"
-              className="min-w-0 flex-1 bg-transparent px-1 py-3 text-sm outline-none placeholder:text-hodl-muted"
-            />
-            <button
-              type="submit"
-              disabled={loading}
-              className="flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-hodl-blue to-blue-500 px-4 py-3 text-sm font-semibold shadow-lg shadow-blue-900/40 disabled:opacity-60"
+          <div>
+            <p className="mb-2 px-1 text-xs font-extrabold uppercase tracking-[0.16em] text-hodl-cyan">
+              Paste a token CA
+            </p>
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                onScan(mint);
+              }}
+              className="rounded-[20px] bg-gradient-to-r from-hodl-blue via-hodl-cyan to-violet-500 p-[1.5px] shadow-[0_0_34px_rgba(47,91,255,0.5)]"
             >
-              <Icon name="bolt" className="h-4 w-4" />
-              {loading ? "Scanning…" : "Scan"}
-            </button>
-          </form>
+              <div className="flex items-center gap-2 rounded-[19px] bg-[#050a26] p-2">
+                <Icon name="link" className="ml-2 h-5 w-5 shrink-0 text-hodl-cyan" />
+                <input
+                  suppressHydrationWarning
+                  ref={inputRef}
+                  type="text"
+                  value={mint}
+                  onChange={(e) => setMint(e.target.value)}
+                  placeholder="Solana mint address…"
+                  className="min-w-0 flex-1 bg-transparent px-1 py-3.5 text-[15px] font-medium outline-none placeholder:text-slate-500"
+                />
+                {mint ? (
+                  <button type="button" onClick={() => setMint("")} aria-label="Clear" className="px-2 text-xl text-hodl-muted">
+                    ×
+                  </button>
+                ) : (
+                  <button type="button" onClick={pasteCA} className="rounded-lg border border-hodl-line px-3 py-2 text-xs font-extrabold text-hodl-cyan">
+                    Paste
+                  </button>
+                )}
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-hodl-blue to-blue-500 px-5 py-3.5 text-[15px] font-extrabold shadow-lg shadow-blue-900/50 disabled:opacity-60"
+                >
+                  <Icon name="bolt" className="h-4 w-4" />
+                  {loading ? "Scanning…" : "Scan"}
+                </button>
+              </div>
+            </form>
+            <p className="mt-2 px-1 text-[11px] text-slate-400">Solana only · no wallet connection needed</p>
+          </div>
 
           {error && <p className="text-sm text-rose-300">{error}</p>}
 
@@ -332,7 +407,7 @@ export function Landing({
                   setMint(c.mint);
                   onScan(c.mint);
                 }}
-                className="shrink-0 whitespace-nowrap rounded-full border border-hodl-line bg-white/5 px-3.5 py-2 text-xs font-semibold"
+                className="shrink-0 whitespace-nowrap rounded-full border border-hodl-line bg-hodl-panel/70 px-4 py-2.5 text-[13px] font-extrabold tracking-wide text-white"
               >
                 {c.label}
               </button>
@@ -343,7 +418,7 @@ export function Landing({
 
           <section>
             <div className="mb-2 flex items-center justify-between px-1">
-              <p className="flex items-center gap-2 text-base font-bold">
+              <p className="flex items-center gap-2 text-xl font-extrabold">
                 <Icon name="fire" className="h-5 w-5 text-orange-400" /> Trending Now
               </p>
               {trend && (
@@ -359,7 +434,6 @@ export function Landing({
                 {trendFailed ? "Trending is unavailable right now." : "Loading trending tokens…"}
               </p>
             )}
-            <p className="mt-2 px-1 text-[10px] text-hodl-muted">Trending pools via GeckoTerminal. Not a recommendation.</p>
           </section>
 
           <section className="hodl-card flex items-center gap-3 p-4">
