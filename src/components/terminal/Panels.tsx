@@ -84,7 +84,7 @@ export function HealthPanel({ d }: { d: Data }) {
     <section className="hodl-card overflow-hidden p-4">
       <div className="flex items-baseline justify-between">
         <span className="text-[10px] uppercase tracking-[0.18em] text-hodl-muted">
-          Health v0.1.1
+          Health v0.1.2
         </span>
         <span className="text-[10px] text-hodl-muted">
           {seen}/{d.factors.length} checks observed

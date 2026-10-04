@@ -1,6 +1,6 @@
 import type { NormalizedFactor } from "./tape";
 
-// Provisional constants for Health v0.1.1.
+// Provisional constants for Health v0.1.2.
 // Flow is based on transaction counts, not USD buy/sell volume.
 const MIN_TRANSACTIONS = 20;
 const BALANCED_SCORE = 7;

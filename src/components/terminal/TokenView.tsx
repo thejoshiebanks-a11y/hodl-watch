@@ -33,6 +33,16 @@ export function band(s: number | null) {
 export const bandColor = (s: number | null) =>
   s === null ? "#64748b" : s >= 7.5 ? "#2dd4bf" : s >= 5.5 ? "#fbbf24" : "#fb7185";
 
+const DOMAIN_LABEL: Record<string, string> = {
+  MARKET: "Market",
+  LIQUIDITY: "Liquidity",
+  FLOW: "Flow",
+  HOLDERS: "Holders",
+  CREATOR: "Creator",
+  SECURITY: "Security",
+  LIFECYCLE: "Lifecycle",
+};
+
 const dot: Record<Tone, string> = {
   ok: "bg-emerald-400",
   mid: "bg-amber-400",
@@ -66,10 +76,10 @@ export function riskRows(d: Data): [string, string, Tone][] {
   ];
 }
 
-function Ring({ score }: { score: number | null }) {
+function Ring({ score, muted = false }: { score: number | null; muted?: boolean }) {
   const r = 52;
   const c = 2 * Math.PI * r;
-  const col = bandColor(score);
+  const col = muted ? "#64748b" : bandColor(score);
   return (
     <div className="relative h-32 w-32 shrink-0">
       <svg
@@ -145,6 +155,16 @@ export function TokenView({ d, onBack }: { d: Data; onBack: () => void }) {
   const h1 = m.periods.h1;
   const seen = d.factors.filter((f) => f.status === "AVAILABLE").length;
   const rows = riskRows(d);
+  const domains = summarizeHealthGroups(d.factors);
+  const partial = d.health.partial || d.health.missingCritical;
+  const missingCrit = domains
+    .filter((g) => (g.group === "LIQUIDITY" || g.group === "SECURITY") && g.score === null)
+    .map((g) => DOMAIN_LABEL[g.group]);
+  const partialReason = !partial
+    ? ""
+    : missingCrit.length > 0
+      ? `${missingCrit.join(" and ")} not observed`
+      : `only ${Math.round(d.health.coverage * 100)}% of checks observed`;
 
   const worst: [string, string] = rows.some((r) => r[2] === "bad")
     ? ["High", "text-red-300"]
@@ -257,13 +277,13 @@ export function TokenView({ d, onBack }: { d: Data; onBack: () => void }) {
                 Token health score
               </p>
               <div className="mt-3 flex items-center gap-4">
-                <Ring score={score} />
+                <Ring score={score} muted={partial} />
                 <div>
-                  <p className="text-xl font-extrabold tracking-wide" style={{ color: bandColor(score) }}>
-                    {band(score)}
+                  <p className="text-xl font-extrabold tracking-wide" style={{ color: partial ? "#94a3b8" : bandColor(score) }}>
+                    {partial ? "PARTIAL" : band(score)}
                   </p>
                   <p className="mt-1 text-xs text-hodl-muted">
-                    Health v0.1.1 · {seen}/{d.factors.length} checks observed
+                    {d.health.version.replace("health-", "Health ")} · {seen}/{d.factors.length} checks observed{partialReason ? ` · ${partialReason}` : ""}
                   </p>
                 </div>
               </div>
@@ -274,15 +294,24 @@ export function TokenView({ d, onBack }: { d: Data; onBack: () => void }) {
                     Risk: <span className={worst[1]}>{worst[0]}</span>
                   </span>
                 </div>
-                {rows.map(([k, v, t]) => (
-                  <div key={k} className="flex items-center justify-between py-2.5 text-sm">
-                    <span className="flex items-center gap-2 text-hodl-muted">
-                      <span className={`h-2 w-2 rounded-full ${dot[t]}`} />
-                      {k}
-                    </span>
-                    <span>{v}</span>
-                  </div>
-                ))}
+                {domains.map((g) => {
+                  const t: Tone =
+                    g.score === null ? "na" : g.score >= 7 ? "ok" : g.score >= 4 ? "mid" : "bad";
+                  return (
+                    <div key={g.group} className="flex items-center justify-between py-2.5 text-sm">
+                      <span className="flex items-center gap-2 text-hodl-muted">
+                        <span className={`h-2 w-2 rounded-full ${dot[t]}`} />
+                        {DOMAIN_LABEL[g.group]}
+                      </span>
+                      <span className="tabular-nums">
+                        {g.score === null ? "N/A" : g.score.toFixed(1)}
+                        <span className="ml-1.5 text-xs text-hodl-muted">
+                          {g.availableFactors}/{g.totalFactors}
+                        </span>
+                      </span>
+                    </div>
+                  );
+                })}
               </div>
             </section>
 

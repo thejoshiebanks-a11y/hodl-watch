@@ -154,12 +154,14 @@ function Featured({ d, onScan }: { d: Data; onScan: (m: string) => void }) {
         ? "N/A"
         : "Low";
   const lp = d.identity.lpLockedPctWeighted;
+  const observed = d.factors.filter((f) => f.status === "AVAILABLE").length;
+  const partial = d.health.partial || d.health.missingCritical;
 
   const stats: [string, string, string][] = [
     ["Liquidity", usd(m.liquidityUsd), liq === null ? "" : liq >= 7 ? "Strong" : liq >= 4 ? "Moderate" : "Thin"],
     ["Holders", !d.identity.holderCount ? "N/A" : compact.format(d.identity.holderCount), ""],
     ["LP locked", lp === null ? "N/A" : `${lp.toFixed(0)}%`, "weighted"],
-    ["Risk", risk, "3 checks"],
+    ["Risk", risk, `${observed}/${d.factors.length} checks${partial ? " · partial" : ""}`],
   ];
 
   return (
@@ -179,7 +181,7 @@ function Featured({ d, onScan }: { d: Data; onScan: (m: string) => void }) {
             <p className="text-xs"><Change v={m.periods.h24.priceChangePct} /> <span className="text-hodl-muted">(24h)</span></p>
           </div>
         </div>
-        <MiniRing score={d.health.score} />
+        <div className={partial ? "opacity-60 grayscale" : ""}><MiniRing score={d.health.score} /></div>
       </div>
       <div className="mt-3">
         <Spark pool={m.pairAddress} />
