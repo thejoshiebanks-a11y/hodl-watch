@@ -3,6 +3,7 @@
 import { useState, type CSSProperties } from "react";
 import type { ScanSuccess } from "@/lib/types/scan";
 import { summarizeHealthGroups } from "@/health/score/groups";
+import { MIN_FLOW_TRANSACTIONS } from "@/health/factors/flow";
 import { PriceChart } from "@/components/PriceChart";
 import { DetailTabs } from "@/components/terminal/Panels";
 import { Evidence, Watch } from "@/components/terminal/Extras";
@@ -186,8 +187,17 @@ export function TokenView({ d, onBack }: { d: Data; onBack: () => void }) {
     ["people", "Holders", !i.holderCount ? NA : i.holderCount.toLocaleString("en-US")],
   ];
 
+  const h6 = m.periods.h6;
+  const thin1h =
+    h1.buys === null || h1.sells === null || h1.buys + h1.sells < MIN_FLOW_TRANSACTIONS;
+  const use6h =
+    thin1h &&
+    h6.buys !== null &&
+    h6.sells !== null &&
+    h6.buys + h6.sells >= MIN_FLOW_TRANSACTIONS;
+  const fw = use6h ? h6 : h1;
   const signals: [Parameters<typeof Icon>[0]["name"], string, string, string][] = [
-    ["flow", "Flow (1h)", h1.buys === null || h1.sells === null ? NA : `${h1.buys}/${h1.sells}`, "Buys / sells"],
+    ["flow", use6h ? "Flow (6h)" : "Flow (1h)", fw.buys === null || fw.sells === null ? NA : `${fw.buys}/${fw.sells}`, use6h ? "1h too thin" : "Buys / sells"],
     ["lock", "LP locked", pct(i.lpLockedPctWeighted), "Across pools"],
     ["eye", "Insiders", pct(i.insiderSupplyPct), "Of supply"],
   ];

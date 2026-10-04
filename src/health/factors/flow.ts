@@ -2,7 +2,7 @@ import type { NormalizedFactor } from "./tape";
 
 // Provisional constants for Health v0.1.2.
 // Flow is based on transaction counts, not USD buy/sell volume.
-const MIN_TRANSACTIONS = 20;
+export const MIN_FLOW_TRANSACTIONS = 20;
 const BALANCED_SCORE = 7;
 
 function clamp(value: number, min: number, max: number): number {
@@ -27,7 +27,7 @@ export function scoreFlow(
 
   const total = buys + sells;
 
-  if (total < MIN_TRANSACTIONS) {
+  if (total < MIN_FLOW_TRANSACTIONS) {
     return null;
   }
 
