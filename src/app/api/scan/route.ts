@@ -3,6 +3,8 @@ import { getDexScreenerSnapshot } from "@/lib/providers/market/dexscreener";
 import { getRugcheckIdentity } from "@/lib/providers/risk/rugcheck";
 import { SolanaMintSchema } from "@/lib/validation/solana";
 import { calculateHealth } from "@/health/score/calculate";
+import { POOL_PATTERN, getCandles } from "@/lib/providers/market/candles";
+import type { Candle } from "@/lib/types/chart";
 
 export async function POST(request: Request) {
   try {
@@ -37,7 +39,17 @@ export async function POST(request: Request) {
       );
     }
 
-    const health = calculateHealth(market, identity);
+    let candles: Candle[] | null = null;
+    if (market.pairAddress && POOL_PATTERN.test(market.pairAddress)) {
+      const c = await getCandles(market.pairAddress, "15m", {
+        limit: 100,
+        timeoutMs: 4000,
+        freshMs: 30_000,
+      });
+      candles = c.ok ? c.body.candles : null;
+    }
+
+    const health = calculateHealth(market, identity, candles);
 
     return NextResponse.json({
       data: {

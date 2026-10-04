@@ -2,6 +2,8 @@ import type { TokenIdentitySnapshot } from "@/lib/types/identity";
 import type { TokenMarketSnapshot } from "@/lib/types/token";
 import type { HealthFactor, HealthGroup } from "./types";
 import type { NormalizedFactor } from "./tape";
+import type { Candle } from "@/lib/types/chart";
+import { scoreDrawdown, scoreRecovery, scoreVolatility } from "./candles";
 import { scoreLiquidityRatio, scoreLiquidityUsd } from "./liquidity";
 import { scoreTape1h, scoreTape5m } from "./tape";
 import { scoreFlow } from "./flow";
@@ -59,6 +61,7 @@ function add(
 export function assembleHealthFactors(
   market: TokenMarketSnapshot,
   identity: TokenIdentitySnapshot,
+  candles?: Candle[] | null,
 ): HealthFactor[] {
   const f: HealthFactor[] = [];
   const p = market.periods;
@@ -68,6 +71,13 @@ export function assembleHealthFactors(
   add(f, "market_1h", "1h price stability", "MARKET", scoreTape1h(p.h1.priceChangePct), "1h price change is unavailable.");
   add(f, "market_6h", "6h price stability", "MARKET", scoreStability(p.h6.priceChangePct, "6h"), "6h price change is unavailable.");
   add(f, "market_24h", "24h price stability", "MARKET", scoreStability(p.h24.priceChangePct, "24h"), "24h price change is unavailable.");
+
+  // MARKET (from candles). Skipped entirely when the caller passes no candle argument.
+  if (candles !== undefined) {
+    add(f, "market_drawdown", "Drawdown from 24h high", "MARKET", scoreDrawdown(candles), "Candle data is unavailable.");
+    add(f, "market_volatility", "Volatility (15m candles)", "MARKET", scoreVolatility(candles), "Candle data is unavailable.");
+    add(f, "market_recovery", "Recovery from 24h low", "MARKET", scoreRecovery(candles), "Candle data is unavailable.");
+  }
 
   // LIQUIDITY
   add(f, "liquidity_usd", "Absolute liquidity", "LIQUIDITY", scoreLiquidityUsd(market.liquidityUsd), "USD liquidity is unavailable.");
