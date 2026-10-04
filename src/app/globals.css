@@ -1,26 +1,32 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+@theme {
+  --color-hodl-bg: #040919;
+  --color-hodl-panel: #0b1642;
+  --color-hodl-line: rgb(90 140 255 / 0.28);
+  --color-hodl-blue: #2f5bff;
+  --color-hodl-cyan: #38d6ff;
+  --color-hodl-text: #eef3ff;
+  --color-hodl-muted: #8b9bcf;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background:
+    radial-gradient(900px 520px at 85% -5%, rgba(47, 91, 255, 0.3), transparent 60%),
+    radial-gradient(700px 500px at -10% 30%, rgba(124, 58, 237, 0.18), transparent 60%),
+    #040919;
+  background-attachment: fixed;
+  color: #eef3ff;
+  font-family: var(--font-geist-sans), system-ui, sans-serif;
+}
+
+.hodl-card {
+  border: 1px solid rgb(90 140 255 / 0.28);
+  border-radius: 1rem;
+  background: linear-gradient(180deg, rgba(18, 32, 92, 0.72), rgba(8, 16, 52, 0.88));
+  box-shadow: 0 12px 40px rgba(20, 50, 170, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.hodl-glow {
+  text-shadow: 0 0 18px rgba(56, 214, 255, 0.45);
 }

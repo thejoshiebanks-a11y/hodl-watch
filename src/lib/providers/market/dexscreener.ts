@@ -74,6 +74,7 @@ const DexPairSchema = z.object({
 
   info: z
     .object({
+      imageUrl: z.string().nullable().optional(),
       websites: z
         .array(
           z.object({
@@ -218,6 +219,7 @@ export async function getDexScreenerSnapshot(
     websites: parseWebsites(pair),
     socials: parseSocials(pair),
     activeBoosts: pair.boosts?.active ?? null,
+    imageUrl: pair.info?.imageUrl ?? null,
 
     observedAt: new Date().toISOString(),
     provider: "dexscreener",

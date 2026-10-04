@@ -15,6 +15,7 @@ export type TokenMarketPeriod = {
 };
 
 export type TokenMarketSnapshot = {
+  imageUrl?: string | null;
   mint: string;
   symbol: string | null;
   name: string | null;

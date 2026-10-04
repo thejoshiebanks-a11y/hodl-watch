@@ -12,16 +12,15 @@ import {
 } from "lightweight-charts";
 import type { Candle } from "@/lib/types/chart";
 
-const TIMEFRAMES = ["1m", "5m", "15m", "1h", "4h"] as const;
+const TIMEFRAMES = ["1m", "5m", "15m", "1h", "4h", "all"] as const;
 type Timeframe = (typeof TIMEFRAMES)[number];
 
 const UP = "#2dd4bf";
-const DOWN = "#f87171";
+const DOWN = "#fb7185";
 
 function precisionFor(price: number): number {
   if (!Number.isFinite(price) || price <= 0) return 6;
-  if (price >= 1) return 2;
-  return Math.min(10, Math.ceil(-Math.log10(price)) + 3);
+  return price >= 1 ? 2 : Math.min(10, Math.ceil(-Math.log10(price)) + 3);
 }
 
 export function PriceChart({ pool }: { pool: string | null }) {
@@ -30,10 +29,12 @@ export function PriceChart({ pool }: { pool: string | null }) {
   const candleRef = useRef<ISeriesApi<"Candlestick"> | null>(null);
   const volumeRef = useRef<ISeriesApi<"Histogram"> | null>(null);
 
-  const [timeframe, setTimeframe] = useState<Timeframe>("5m");
+  const [timeframe, setTimeframe] = useState<Timeframe>("1m");
+  const [hasData, setHasData] = useState(false);
   const [result, setResult] = useState<{
     key: string;
     status: "ready" | "error";
+    message?: string;
   } | null>(null);
 
   const key = `${pool}:${timeframe}`;
@@ -47,19 +48,15 @@ export function PriceChart({ pool }: { pool: string | null }) {
       autoSize: true,
       layout: {
         background: { type: ColorType.Solid, color: "transparent" },
-        textColor: "#71717a",
+        textColor: "#7f8fbf",
         fontSize: 11,
       },
       grid: {
-        vertLines: { color: "rgba(255,255,255,0.03)" },
-        horzLines: { color: "rgba(255,255,255,0.03)" },
+        vertLines: { color: "rgba(96,140,255,0.07)" },
+        horzLines: { color: "rgba(96,140,255,0.07)" },
       },
       rightPriceScale: { borderVisible: false },
-      timeScale: {
-        borderVisible: false,
-        timeVisible: true,
-        secondsVisible: false,
-      },
+      timeScale: { borderVisible: false, timeVisible: true, secondsVisible: false },
     });
 
     const candles = chart.addSeries(CandlestickSeries, {
@@ -73,11 +70,10 @@ export function PriceChart({ pool }: { pool: string | null }) {
     const volume = chart.addSeries(HistogramSeries, {
       priceFormat: { type: "volume" },
       priceScaleId: "",
+      lastValueVisible: false,
+      priceLineVisible: false,
     });
-
-    volume.priceScale().applyOptions({
-      scaleMargins: { top: 0.8, bottom: 0 },
-    });
+    volume.priceScale().applyOptions({ scaleMargins: { top: 0.82, bottom: 0 } });
 
     chartRef.current = chart;
     candleRef.current = candles;
@@ -99,34 +95,21 @@ export function PriceChart({ pool }: { pool: string | null }) {
 
     async function load() {
       try {
-        const response = await fetch(
-          `/api/chart?pool=${pool}&timeframe=${timeframe}`,
-          { cache: "no-store" },
-        );
-
-        if (!response.ok) throw new Error(String(response.status));
+        const response = await fetch(`/api/chart?pool=${pool}&timeframe=${timeframe}`, {
+          cache: "no-store",
+        });
+        if (!response.ok) throw new Error(`chart route ${response.status}`);
 
         const body = (await response.json()) as { candles: Candle[] };
-
         if (cancelled || !candleRef.current || !volumeRef.current) return;
 
         const last = body.candles[body.candles.length - 1];
-
-        if (!last) {
-          setResult({ key, status: "error" });
-          return;
-        }
+        if (!last) throw new Error("no candles returned");
 
         const precision = precisionFor(last.close);
-
         candleRef.current.applyOptions({
-          priceFormat: {
-            type: "price",
-            precision,
-            minMove: Math.pow(10, -precision),
-          },
+          priceFormat: { type: "price", precision, minMove: Math.pow(10, -precision) },
         });
-
         candleRef.current.setData(
           body.candles.map((c) => ({
             time: c.time as UTCTimestamp,
@@ -136,15 +119,11 @@ export function PriceChart({ pool }: { pool: string | null }) {
             close: c.close,
           })),
         );
-
         volumeRef.current.setData(
           body.candles.map((c) => ({
             time: c.time as UTCTimestamp,
             value: c.volume,
-            color:
-              c.close >= c.open
-                ? "rgba(45,212,191,0.35)"
-                : "rgba(248,113,113,0.35)",
+            color: c.close >= c.open ? "rgba(45,212,191,0.4)" : "rgba(251,113,133,0.4)",
           })),
         );
 
@@ -152,16 +131,21 @@ export function PriceChart({ pool }: { pool: string | null }) {
           chartRef.current?.timeScale().fitContent();
           first = false;
         }
-
+        setHasData(true);
         setResult({ key, status: "ready" });
-      } catch {
-        if (!cancelled) setResult({ key, status: "error" });
+      } catch (err) {
+        if (!cancelled) {
+          setResult({
+            key,
+            status: "error",
+            message: err instanceof Error ? err.message : "unknown error",
+          });
+        }
       }
     }
 
     load();
     const id = setInterval(load, 15000);
-
     return () => {
       cancelled = true;
       clearInterval(id);
@@ -171,37 +155,39 @@ export function PriceChart({ pool }: { pool: string | null }) {
   if (!pool) return null;
 
   return (
-    <section className="mt-4 rounded-xl border border-white/6 bg-white/[0.018]">
-      <div className="flex items-center justify-between border-b border-white/6 px-4 py-3">
-        <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-zinc-600">
-          Chart
-        </span>
-        <div className="flex gap-1">
-          {TIMEFRAMES.map((tf) => (
-            <button
-              key={tf}
-              type="button"
-              onClick={() => setTimeframe(tf)}
-              className={`rounded-md px-2 py-1 text-[10px] uppercase tracking-[0.14em] ${
-                tf === timeframe
-                  ? "bg-white/10 text-zinc-200"
-                  : "text-zinc-600"
-              }`}
-            >
-              {tf}
-            </button>
-          ))}
-        </div>
+    <div className="space-y-3">
+      <div className="flex hodl-card p-1">
+        {TIMEFRAMES.map((tf) => (
+          <button
+            key={tf}
+            type="button"
+            onClick={() => setTimeframe(tf)}
+            className={`flex-1 rounded-xl py-2.5 text-xs font-semibold uppercase tracking-[0.1em] ${
+              tf === timeframe
+                ? "bg-gradient-to-r from-hodl-blue to-blue-500 text-white shadow-lg shadow-blue-900/40"
+                : "text-hodl-muted"
+            }`}
+          >
+            {tf}
+          </button>
+        ))}
       </div>
 
-      <div className="relative">
-        <div ref={containerRef} className="h-[320px] w-full" />
-        {status !== "ready" && (
-          <div className="absolute inset-0 flex items-center justify-center text-xs text-zinc-600">
-            {status === "loading" ? "Loading chart…" : "Chart data unavailable"}
+      <div className="relative hodl-card overflow-hidden">
+        <div ref={containerRef} className="h-[360px] w-full" />
+        {!hasData && (
+          <div className="absolute inset-0 flex items-center justify-center px-6 text-center text-xs text-hodl-muted">
+            {status === "error"
+              ? `Chart unavailable: ${result?.message ?? "unknown"}`
+              : "Loading chart…"}
           </div>
         )}
+        {hasData && status === "error" && (
+          <span className="absolute right-3 top-3 rounded-full bg-amber-400/15 px-2 py-0.5 text-[10px] text-amber-300">
+            delayed
+          </span>
+        )}
       </div>
-    </section>
+    </div>
   );
 }
