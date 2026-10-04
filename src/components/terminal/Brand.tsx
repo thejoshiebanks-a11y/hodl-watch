@@ -49,6 +49,13 @@ const PATHS = {
   bell: "M6 16v-5a6 6 0 0 1 12 0v5l2 2H4zM10 21h4",
   copy: "M9 9h10v11H9zM5 15V4h10",
   check: "M5 12l4 4 10-10",
+  link: "M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1",
+  bolt: "M13 2L4 14h7l-1 8 9-12h-7z",
+  fire: "M12 3c1 4 5 5.5 5 10a5 5 0 0 1-10 0c0-2 1-3 2-4 0 2 1 3 2 3 0-3-1-6 1-9z",
+  home: "M4 11l8-7 8 7v9h-5v-6H9v6H4z",
+  dots: "M6 12h.01M12 12h.01M18 12h.01",
+  scan: "M4 8V5a1 1 0 0 1 1-1h3M16 4h3a1 1 0 0 1 1 1v3M20 16v3a1 1 0 0 1-1 1h-3M8 20H5a1 1 0 0 1-1-1v-3M8 12h8",
+  chevron: "M9 6l6 6-6 6",
 } as const;
 
 export function Icon({

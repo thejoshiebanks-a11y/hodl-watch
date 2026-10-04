@@ -17,7 +17,7 @@ const compact = new Intl.NumberFormat("en-US", { notation: "compact", maximumFra
 const usd = (v: number | null) => (v === null ? NA : `$${compact.format(v)}`);
 const pct = (v: number | null | undefined, d = 1) =>
   v === null || v === undefined || !Number.isFinite(v) ? NA : `${v.toFixed(d)}%`;
-const short = (a: string) => `${a.slice(0, 8)}…${a.slice(-4)}`;
+const short = (a: string) => `${a.slice(0, 6)}…${a.slice(-4)}`;
 
 function price(p: number | null) {
   if (p === null || p <= 0) return NA;
@@ -25,12 +25,12 @@ function price(p: number | null) {
 }
 
 // Display bands only. They do not change the Health score.
-function band(s: number | null) {
+export function band(s: number | null) {
   if (s === null) return "UNSCORED";
   return s >= 7.5 ? "HEALTHY" : s >= 5.5 ? "MIXED" : s >= 3.5 ? "WEAK" : "POOR";
 }
 
-const bandColor = (s: number | null) =>
+export const bandColor = (s: number | null) =>
   s === null ? "#64748b" : s >= 7.5 ? "#2dd4bf" : s >= 5.5 ? "#fbbf24" : "#fb7185";
 
 const dot: Record<Tone, string> = {
@@ -40,7 +40,7 @@ const dot: Record<Tone, string> = {
   na: "bg-zinc-500",
 };
 
-function riskRows(d: Data): [string, string, Tone][] {
+export function riskRows(d: Data): [string, string, Tone][] {
   const i = d.identity;
   const liq = summarizeHealthGroups(d.factors).find((g) => g.group === "LIQUIDITY")?.score ?? null;
   const top = i.topHolderPctExcludingKnown ?? i.topHolderPct;
@@ -221,7 +221,7 @@ export function TokenView({ d, onBack }: { d: Data; onBack: () => void }) {
             <button
               type="button"
               onClick={copy}
-              className="mt-1.5 flex items-center gap-1.5 rounded-full border border-hodl-line bg-white/5 px-3 py-1 text-[11px] text-hodl-muted"
+              className="mt-1.5 flex items-center gap-1.5 whitespace-nowrap rounded-full border border-hodl-line bg-white/5 px-3 py-1 text-[11px] text-hodl-muted"
             >
               {copied ? "Copied" : short(m.mint)}
               <Icon name={copied ? "check" : "copy"} className="h-3.5 w-3.5" />
