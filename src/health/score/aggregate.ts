@@ -1,5 +1,9 @@
 import type { HealthFactor } from "@/health/factors/types";
-import { HEALTH_GROUP_WEIGHTS, HEALTH_VERSION } from "./config";
+import {
+  HEALTH_GROUP_WEIGHTS,
+  HEALTH_VERSION,
+  PARTIAL_COVERAGE_BELOW,
+} from "./config";
 import type { HealthScore } from "./types";
 
 type GroupScore = {
@@ -63,6 +67,8 @@ export function aggregateHealth(
       version: HEALTH_VERSION,
       scoredFactors: 0,
       availableFactors: 0,
+      partial: true,
+      missingCritical: true,
       explanation: "Health is unavailable because no scored factors are available.",
     };
   }
@@ -107,6 +113,10 @@ export function aggregateHealth(
     version: HEALTH_VERSION,
     scoredFactors: totalScoredFactors,
     availableFactors: totalAvailableFactors,
+    partial: coverage < PARTIAL_COVERAGE_BELOW,
+    missingCritical:
+      !groups.some((g) => g.group === "SECURITY") ||
+      !groups.some((g) => g.group === "LIQUIDITY"),
     explanation,
   };
 }

@@ -1,6 +1,7 @@
-import type { HealthFactor } from "@/health/factors/types";
+import type { HealthFactor, HealthGroup } from "@/health/factors/types";
+import { HEALTH_GROUP_WEIGHTS } from "./config";
 
-export type HealthGroup = "TAPE" | "LIQUIDITY" | "FLOW" | "STRUCTURE";
+export type { HealthGroup };
 
 export type HealthGroupSummary = {
   group: HealthGroup;
@@ -12,31 +13,20 @@ export type HealthGroupSummary = {
 export function summarizeHealthGroups(
   factors: HealthFactor[],
 ): HealthGroupSummary[] {
-  const groups: HealthGroup[] = [
-    "TAPE",
-    "LIQUIDITY",
-    "FLOW",
-    "STRUCTURE",
-  ];
+  const groups = Object.keys(HEALTH_GROUP_WEIGHTS) as HealthGroup[];
 
   return groups.map((group) => {
-    const groupFactors = factors.filter(
-      (factor) => factor.group === group,
-    );
-
+    const groupFactors = factors.filter((f) => f.group === group);
     const available = groupFactors.filter(
-      (factor) =>
-        factor.status === "AVAILABLE" &&
-        factor.value !== null &&
-        Number.isFinite(factor.value),
+      (f) =>
+        f.status === "AVAILABLE" &&
+        f.value !== null &&
+        Number.isFinite(f.value),
     );
-
     const score =
       available.length > 0
-        ? available.reduce(
-            (sum, factor) => sum + (factor.value ?? 0),
-            0,
-          ) / available.length
+        ? available.reduce((s, f) => s + (f.value ?? 0), 0) /
+          available.length
         : null;
 
     return {

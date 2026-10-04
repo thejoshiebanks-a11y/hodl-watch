@@ -1,9 +1,18 @@
 export type HealthFactorStatus = "AVAILABLE" | "N/A";
 
+export type HealthGroup =
+  | "MARKET"
+  | "LIQUIDITY"
+  | "FLOW"
+  | "HOLDERS"
+  | "CREATOR"
+  | "SECURITY"
+  | "LIFECYCLE";
+
 export type HealthFactor = {
   key: string;
   label: string;
-  group: "TAPE" | "LIQUIDITY" | "FLOW" | "STRUCTURE";
+  group: HealthGroup;
   status: HealthFactorStatus;
   value: number | null;
   unit: string | null;

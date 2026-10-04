@@ -1,87 +1,96 @@
 import { describe, expect, it } from "vitest";
+import type { HealthFactor, HealthGroup } from "@/health/factors/types";
 import { aggregateHealth } from "./aggregate";
-import type { HealthFactor } from "@/health/factors/types";
 
 function factor(
   key: string,
-  group: HealthFactor["group"],
+  group: HealthGroup,
   value: number | null,
-  status: HealthFactor["status"] = value === null
-    ? "N/A"
-    : "AVAILABLE",
 ): HealthFactor {
   return {
     key,
     label: key,
     group,
-    status,
+    status: value === null ? "N/A" : "AVAILABLE",
     value,
-    unit: null,
-    explanation: "",
+    unit: value === null ? null : "score",
+    explanation: "test",
   };
 }
 
 describe("aggregateHealth", () => {
   it("returns unavailable when no factors are available", () => {
-    const result = aggregateHealth([
-      factor("flow", "FLOW", null),
-      factor("structure", "STRUCTURE", null),
-    ]);
-
-    expect(result.score).toBeNull();
-    expect(result.coverage).toBe(0);
-    expect(result.availableFactors).toBe(0);
+    const r = aggregateHealth([factor("a", "MARKET", null)]);
+    expect(r.score).toBeNull();
+    expect(r.coverage).toBe(0);
   });
 
   it("renormalizes weights when groups are unavailable", () => {
-    const result = aggregateHealth([
-      factor("tape", "TAPE", 8),
-      factor("liquidity", "LIQUIDITY", 6),
-      factor("flow", "FLOW", null),
-      factor("structure", "STRUCTURE", null),
+    // MARKET 0.15 and LIQUIDITY 0.25 observed: (8*.15 + 6*.25) / .40
+    const r = aggregateHealth([
+      factor("m", "MARKET", 8),
+      factor("l", "LIQUIDITY", 6),
+      factor("s", "SECURITY", null),
     ]);
-
-    expect(result.score).toBe(7);
-    expect(result.coverage).toBe(0.5);
+    expect(r.score).toBeCloseTo(6.75, 2);
+    expect(r.coverage).toBeCloseTo(0.67, 2);
   });
 
   it("averages multiple factors inside a group", () => {
-    const result = aggregateHealth([
-      factor("tape-5m", "TAPE", 8),
-      factor("tape-1h", "TAPE", 6),
-      factor("liquidity", "LIQUIDITY", 4),
+    const r = aggregateHealth([
+      factor("m1", "MARKET", 8),
+      factor("m2", "MARKET", 6),
     ]);
-
-    expect(result.score).toBe(5.5);
+    expect(r.score).toBe(7);
   });
 
   it("does not let unavailable factors contribute zero", () => {
-    const result = aggregateHealth([
-      factor("tape", "TAPE", 8),
-      factor("tape-missing", "TAPE", null),
+    const r = aggregateHealth([
+      factor("m1", "MARKET", 8),
+      factor("m2", "MARKET", null),
     ]);
+    expect(r.score).toBe(8);
+    expect(r.availableFactors).toBe(1);
+    expect(r.scoredFactors).toBe(2);
+    expect(r.coverage).toBe(0.5);
+  });
 
-    expect(result.score).toBe(8);
-    expect(result.availableFactors).toBe(1);
-    expect(result.scoredFactors).toBe(2);
+  it("flags partial when under 60% of checks are observed", () => {
+    const partial = aggregateHealth([
+      factor("a", "MARKET", 8),
+      factor("b", "LIQUIDITY", null),
+      factor("c", "SECURITY", null),
+    ]);
+    expect(partial.partial).toBe(true);
+
+    const full = aggregateHealth([
+      factor("a", "MARKET", 8),
+      factor("b", "LIQUIDITY", 7),
+      factor("c", "SECURITY", 9),
+    ]);
+    expect(full.partial).toBe(false);
+  });
+
+  it("flags missingCritical when Liquidity or Security is unobserved", () => {
+    expect(
+      aggregateHealth([factor("a", "MARKET", 9)]).missingCritical,
+    ).toBe(true);
+    expect(
+      aggregateHealth([
+        factor("a", "LIQUIDITY", 9),
+        factor("b", "SECURITY", 9),
+      ]).missingCritical,
+    ).toBe(false);
   });
 
   it("keeps the result between 0 and 10", () => {
-    const result = aggregateHealth([
-      factor("tape", "TAPE", 10),
-      factor("liquidity", "LIQUIDITY", 10),
-    ]);
-
-    expect(result.score).toBeGreaterThanOrEqual(0);
-    expect(result.score).toBeLessThanOrEqual(10);
+    const r = aggregateHealth([factor("a", "MARKET", 10)]);
+    expect(r.score).toBeGreaterThanOrEqual(0);
+    expect(r.score).toBeLessThanOrEqual(10);
   });
 
   it("is deterministic", () => {
-    const factors = [
-      factor("tape", "TAPE", 7.25),
-      factor("liquidity", "LIQUIDITY", 5.5),
-    ];
-
-    expect(aggregateHealth(factors)).toEqual(aggregateHealth(factors));
+    const input = [factor("a", "MARKET", 7.25), factor("b", "FLOW", 5)];
+    expect(aggregateHealth(input)).toEqual(aggregateHealth(input));
   });
 });
