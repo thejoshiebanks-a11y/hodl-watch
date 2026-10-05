@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
+import { WatchlistView } from "./WatchlistView";
 import type { ScanResponse, ScanSuccess } from "@/lib/types/scan";
 import { summarizeHealthGroups } from "@/health/score/groups";
 import { bandColor, riskRows } from "@/components/terminal/TokenView";
@@ -8,7 +9,7 @@ import { HodlLogo, Icon, SolanaMark } from "@/components/terminal/Brand";
 import { HeroGlobe } from "@/components/landing/HeroGlobe";
 
 type Data = ScanSuccess["data"];
-type View = "home" | "trending" | "more";
+type View = "home" | "trending" | "more" | "watchlist";
 type Trend = {
   rank: number;
   mint: string;
@@ -303,6 +304,7 @@ export function Landing({
     ["Home", "home", "home"],
     ["Trending", "trending", "fire"],
     ["Scan", "scan", "scan"],
+    ["Watchlist", "watchlist", "bell"],
     ["More", "more", "dots"],
   ];
 
@@ -465,13 +467,15 @@ export function Landing({
         </section>
       )}
 
+      {view === "watchlist" && <WatchlistView onScan={onScan} />}
+
       {view === "more" && (
         <section className="hodl-card mt-6 space-y-3 p-4 text-sm">
           <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-hodl-muted">About HODL</p>
           <p>HODL watches, you decide. No trading, no wallet connection, no buy or sell calls.</p>
           <p className="text-hodl-muted">Unavailable data shows as N/A. HODL never guesses.</p>
           <div className="divide-y divide-white/10 text-xs">
-            <p className="flex justify-between py-2"><span className="text-hodl-muted">Health model</span><span>v0.1.1</span></p>
+            <p className="flex justify-between py-2"><span className="text-hodl-muted">Health model</span><span>v0.1.2</span></p>
             <p className="flex justify-between py-2"><span className="text-hodl-muted">Watch, Observe, Alerts</span><span>v0.2</span></p>
           </div>
         </section>
@@ -481,7 +485,7 @@ export function Landing({
         className="fixed inset-x-0 bottom-0 z-10 border-t border-hodl-line bg-[#050b24]/95 backdrop-blur"
         style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
       >
-        <div className="mx-auto grid max-w-7xl grid-cols-4">
+        <div className="mx-auto grid max-w-7xl grid-cols-5">
           {nav.map(([label, key, ic]) => (
             <button
               key={key}
