@@ -17,6 +17,7 @@ const AddSchema = z.object({
   symbol: z.string().max(32).nullable().optional(),
   name: z.string().max(64).nullable().optional(),
   imageUrl: z.string().url().max(500).nullable().optional(),
+  health: z.number().min(0).max(10).nullable().optional(),
 });
 
 export async function GET(request: Request) {
@@ -43,6 +44,7 @@ export async function POST(request: Request) {
       symbol: parsed.data.symbol ?? null,
       name: parsed.data.name ?? null,
       imageUrl: parsed.data.imageUrl ?? null,
+      health: parsed.data.health ?? null,
     });
     if (!r.ok) return err("watch_limit_reached", 409);
     return NextResponse.json({ watch: r.entry });

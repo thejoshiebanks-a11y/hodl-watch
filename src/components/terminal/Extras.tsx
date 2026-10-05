@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { getDeviceId } from "@/lib/watch/device";
 import type { ScanSuccess } from "@/lib/types/scan";
 
 type Data = ScanSuccess["data"];
@@ -73,7 +74,7 @@ function saveMarks(marks: Mark[]) {
   }
 }
 
-export function Watch({ d }: { d: Data }) {
+function MarkCard({ d }: { d: Data }) {
   const mint = d.market.mint;
   const [mark, setMark] = useState<Mark | null>(
     () => loadMarks().find((x) => x.mint === mint) ?? null,
@@ -161,3 +162,121 @@ export function Watch({ d }: { d: Data }) {
   );
 }
 
+
+function watchPayload(d: Data) {
+  const img = d.market.imageUrl;
+  return {
+    mint: d.market.mint,
+    symbol: d.market.symbol,
+    name: d.market.name,
+    imageUrl: typeof img === "string" && img.startsWith("http") ? img : null,
+    health: d.health.score,
+  };
+}
+
+function WatchToggle({ d }: { d: Data }) {
+  const mint = d.market.mint;
+  const [watching, setWatching] = useState<boolean | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [note, setNote] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    const device = getDeviceId();
+
+    const request: Promise<boolean> = device
+      ? fetch("/api/watch", { headers: { "x-device-id": device } })
+          .then((r) => (r.ok ? r.json() : Promise.reject(new Error("list failed"))))
+          .then(async (j: { watches: { mint: string }[] }) => {
+            const on = j.watches.some((w) => w.mint === mint);
+            if (on) {
+              await fetch("/api/watch", {
+                method: "POST",
+                headers: { "content-type": "application/json", "x-device-id": device },
+                body: JSON.stringify(watchPayload(d)),
+              }).catch(() => undefined);
+            }
+            return on;
+          })
+      : Promise.reject(new Error("no device"));
+
+    request
+      .then((on) => {
+        if (!cancelled) {
+          setWatching(on);
+          setNote(null);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setWatching(false);
+          setNote("Watchlist is unavailable right now.");
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [d, mint]);
+
+  async function toggle() {
+    const device = getDeviceId();
+    if (!device || busy || watching === null) return;
+    setBusy(true);
+    setNote(null);
+    try {
+      const res = await fetch("/api/watch", {
+        method: watching ? "DELETE" : "POST",
+        headers: { "content-type": "application/json", "x-device-id": device },
+        body: JSON.stringify(watching ? { mint } : watchPayload(d)),
+      });
+      if (res.status === 409) {
+        setNote("Watchlist is full (25 tokens). Remove one first.");
+      } else if (!res.ok) {
+        setNote("Couldn't update the watchlist. Try again.");
+      } else {
+        setWatching(!watching);
+      }
+    } catch {
+      setNote("Couldn't reach HODL. Check your connection.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <section className={`${card} p-4`}>
+      <p className="text-[10px] uppercase tracking-[0.18em] text-hodl-muted">Watchlist</p>
+      <p className="mt-3 text-sm text-hodl-muted">
+        {watching
+          ? "This token is on your watchlist. Scheduled re-scans and alerts are coming in the next steps."
+          : "Add this token to your watchlist to keep it one tap away."}
+      </p>
+      <button
+        type="button"
+        onClick={toggle}
+        disabled={busy || watching === null}
+        className={
+          watching
+            ? "mt-4 w-full rounded-xl border border-hodl-cyan/50 bg-hodl-cyan/10 py-3 text-sm font-semibold text-hodl-cyan disabled:opacity-60"
+            : "mt-4 w-full rounded-xl bg-gradient-to-r from-hodl-blue to-blue-500 py-3 text-sm font-semibold disabled:opacity-60"
+        }
+      >
+        {watching === null ? "Checking…" : watching ? "Watching ✓ · tap to remove" : "Watch this token"}
+      </button>
+      {note && <p className="mt-3 text-xs text-amber-300">{note}</p>}
+      <p className="mt-3 text-[11px] text-hodl-muted">
+        Saved to this device&apos;s watchlist. No account or wallet needed.
+      </p>
+    </section>
+  );
+}
+
+export function Watch({ d }: { d: Data }) {
+  return (
+    <div className="space-y-4">
+      <WatchToggle d={d} />
+      <MarkCard d={d} />
+    </div>
+  );
+}
