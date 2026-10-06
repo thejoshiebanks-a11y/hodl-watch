@@ -7,6 +7,8 @@ export type WatchEvent = {
   severity: Severity;
   title: string;
   detail: string;
+  /** How big the change was (always positive), in the unit the alert catalog uses. */
+  value?: number;
 };
 
 const RANK: Record<Severity, number> = { critical: 0, warning: 1, info: 2 };
@@ -17,6 +19,7 @@ const num = (n: number | null | undefined): n is number =>
   typeof n === "number" && Number.isFinite(n);
 const pctChange = (a: number, b: number) => ((b - a) / a) * 100;
 const cap = (s: string) => s.charAt(0) + s.slice(1).toLowerCase();
+const r2 = (n: number) => Math.round(n * 100) / 100;
 
 function movers(prev: WatchSnapshot, curr: WatchSnapshot): string {
   const rows = Object.keys(curr.domains)
@@ -33,30 +36,44 @@ function movers(prev: WatchSnapshot, curr: WatchSnapshot): string {
     : "no single domain stands out";
 }
 
+// The detector reports every change down to the smallest size a user can ask
+// for. Each device's own settings decide which ones are worth a push.
 export function detectEvents(
   prev: WatchSnapshot,
   curr: WatchSnapshot,
 ): WatchEvent[] {
   const out: WatchEvent[] = [];
-  const add = (kind: string, severity: Severity, title: string, detail: string) =>
-    out.push({ kind, severity, title, detail });
+  const add = (
+    kind: string,
+    severity: Severity,
+    title: string,
+    detail: string,
+    value?: number,
+  ) =>
+    out.push(
+      value === undefined
+        ? { kind, severity, title, detail }
+        : { kind, severity, title, detail, value: r2(value) },
+    );
 
   // Health
   if (num(prev.health) && num(curr.health)) {
     const d = curr.health - prev.health;
-    if (d <= -1) {
+    if (d <= -0.5) {
       add(
         "HEALTH_DROP",
         d <= -2 ? "critical" : "warning",
         `Health fell ${f1(prev.health)} → ${f1(curr.health)}`,
         `Moved by: ${movers(prev, curr)}.`,
+        Math.abs(d),
       );
-    } else if (d >= 1) {
+    } else if (d >= 0.5) {
       add(
         "HEALTH_RISE",
         "info",
         `Health rose ${f1(prev.health)} → ${f1(curr.health)}`,
         `Moved by: ${movers(prev, curr)}.`,
+        d,
       );
     }
   }
@@ -91,23 +108,28 @@ export function detectEvents(
   // Liquidity
   if (num(prev.liquidityUsd) && num(curr.liquidityUsd) && prev.liquidityUsd > 0) {
     const c = pctChange(prev.liquidityUsd, curr.liquidityUsd);
-    if (c <= -15) {
+    const money = `$${Math.round(prev.liquidityUsd).toLocaleString("en-US")} → $${Math.round(curr.liquidityUsd).toLocaleString("en-US")} since the last scan.`;
+    if (c <= -5) {
       add(
         "LIQUIDITY_DROP",
         c <= -30 ? "critical" : "warning",
         `Liquidity down ${Math.abs(c).toFixed(0)}%`,
-        `$${Math.round(prev.liquidityUsd).toLocaleString("en-US")} → $${Math.round(curr.liquidityUsd).toLocaleString("en-US")} since the last scan.`,
+        money,
+        Math.abs(c),
       );
+    } else if (c >= 5) {
+      add("LIQUIDITY_UP", "info", `Liquidity up ${c.toFixed(0)}%`, money, c);
     }
   }
   if (num(prev.lpLockedPct) && num(curr.lpLockedPct)) {
     const d = curr.lpLockedPct - prev.lpLockedPct;
-    if (d <= -5) {
+    if (d <= -2) {
       add(
         "LP_LOCK_DROP",
         d <= -20 ? "critical" : "warning",
         `LP locked fell ${prev.lpLockedPct.toFixed(0)}% → ${curr.lpLockedPct.toFixed(0)}%`,
         "Less of the liquidity is locked than on the last scan.",
+        Math.abs(d),
       );
     }
   }
@@ -123,15 +145,16 @@ export function detectEvents(
   // Price
   if (num(prev.priceUsd) && num(curr.priceUsd) && prev.priceUsd > 0) {
     const c = pctChange(prev.priceUsd, curr.priceUsd);
-    if (c <= -10) {
+    if (c <= -3) {
       add(
         "PRICE_DROP",
         c <= -25 ? "critical" : "warning",
         `Price down ${Math.abs(c).toFixed(1)}%`,
         "Move since the last scan.",
+        Math.abs(c),
       );
-    } else if (c >= 10) {
-      add("PRICE_SPIKE", "info", `Price up ${c.toFixed(1)}%`, "Move since the last scan.");
+    } else if (c >= 3) {
+      add("PRICE_SPIKE", "info", `Price up ${c.toFixed(1)}%`, "Move since the last scan.", c);
     }
   }
 
@@ -161,46 +184,50 @@ export function detectEvents(
       : null;
   const rp = ratio(prev);
   const rc = ratio(curr);
-  if (rc !== null && rc >= 5 && (rp === null || rp < 5)) {
+  if (rc !== null && rc >= 2 && (rp === null || rp < 2 || rc >= rp * 1.25)) {
     add(
       "VOLUME_SPIKE",
       "info",
       `Volume spike (${rc.toFixed(1)}x normal)`,
       "Last-hour volume is far above this token's 24h hourly average.",
+      rc,
     );
   }
 
   // Holders and creator
   if (num(prev.topHolderPct) && num(curr.topHolderPct)) {
     const d = curr.topHolderPct - prev.topHolderPct;
-    if (d >= 2) {
+    if (d >= 0.5) {
       add(
         "TOP_HOLDER_UP",
         "warning",
         `Top holder rose to ${curr.topHolderPct.toFixed(1)}%`,
         `Up ${d.toFixed(1)} points since the last scan.`,
+        d,
       );
     }
   }
   if (num(prev.holderCount) && num(curr.holderCount) && prev.holderCount > 0) {
     const c = pctChange(prev.holderCount, curr.holderCount);
-    if (c <= -5) {
+    if (c <= -1) {
       add(
         "HOLDERS_DROP",
         "warning",
         `Holder count down ${Math.abs(c).toFixed(1)}%`,
         `${prev.holderCount.toLocaleString("en-US")} → ${curr.holderCount.toLocaleString("en-US")}.`,
+        Math.abs(c),
       );
     }
   }
   if (num(prev.insiderSupplyPct) && num(curr.insiderSupplyPct)) {
     const d = curr.insiderSupplyPct - prev.insiderSupplyPct;
-    if (d >= 3) {
+    if (d >= 1) {
       add(
         "INSIDERS_UP",
         "warning",
         `Insider supply rose to ${curr.insiderSupplyPct.toFixed(1)}%`,
         `Up ${d.toFixed(1)} points since the last scan.`,
+        d,
       );
     }
   }
@@ -208,7 +235,7 @@ export function detectEvents(
     num(prev.creatorBalance) &&
     num(curr.creatorBalance) &&
     prev.creatorBalance > 0 &&
-    curr.creatorBalance <= prev.creatorBalance * 0.9
+    curr.creatorBalance <= prev.creatorBalance * 0.95
   ) {
     const c = pctChange(prev.creatorBalance, curr.creatorBalance);
     add(
@@ -216,12 +243,17 @@ export function detectEvents(
       "critical",
       `Creator balance fell ${Math.abs(c).toFixed(0)}%`,
       "The creator wallet holds less than on the last scan, which usually means a sale or transfer.",
+      Math.abs(c),
     );
   }
 
-  // Combined pattern
-  const kinds = new Set(out.map((e) => e.kind));
-  if (kinds.has("CREATOR_SOLD") && (kinds.has("LIQUIDITY_DROP") || kinds.has("FLOW_SELL_LED"))) {
+  // Combined pattern. It keeps its own fixed bar (creator down 10%+ and
+  // liquidity down 15%+, or sell-led flow) so small moves never raise it.
+  const valueOf = (kind: string) => out.find((e) => e.kind === kind)?.value ?? 0;
+  const creatorSold = valueOf("CREATOR_SOLD") >= 10;
+  const liquidityDropped = valueOf("LIQUIDITY_DROP") >= 15;
+  const sellLed = out.some((e) => e.kind === "FLOW_SELL_LED");
+  if (creatorSold && (liquidityDropped || sellLed)) {
     add(
       "EXIT_PATTERN",
       "critical",
