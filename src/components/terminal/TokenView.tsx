@@ -3,6 +3,7 @@
 import { useState, type CSSProperties } from "react";
 import type { ScanSuccess } from "@/lib/types/scan";
 import { summarizeHealthGroups } from "@/health/score/groups";
+import { Footer } from "@/components/Footer";
 import { MIN_FLOW_TRANSACTIONS } from "@/health/factors/flow";
 import { PriceChart } from "@/components/PriceChart";
 import { DetailTabs } from "@/components/terminal/Panels";
@@ -359,6 +360,8 @@ export function TokenView({ d, onBack }: { d: Data; onBack: () => void }) {
         {view === "evidence" && <Evidence d={d} />}
         {view === "watch" && <Watch d={d} />}
       </div>
+
+      <Footer />
 
       <nav
         className="fixed inset-x-0 bottom-0 z-10 border-t border-hodl-line bg-[#050b24]/95 backdrop-blur"

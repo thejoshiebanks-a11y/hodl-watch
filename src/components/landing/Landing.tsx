@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { WatchlistView } from "./WatchlistView";
+import { Footer } from "@/components/Footer";
 import type { ScanResponse, ScanSuccess } from "@/lib/types/scan";
 import { summarizeHealthGroups } from "@/health/score/groups";
 import { bandColor, riskRows } from "@/components/terminal/TokenView";
@@ -480,6 +481,8 @@ export function Landing({
           </div>
         </section>
       )}
+
+      <Footer />
 
       <nav
         className="fixed inset-x-0 bottom-0 z-10 border-t border-hodl-line bg-[#050b24]/95 backdrop-blur"
