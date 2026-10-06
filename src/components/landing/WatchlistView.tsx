@@ -6,7 +6,14 @@ import { ObserveFeed } from "./ObserveFeed";
 import type { WatchEntry } from "@/lib/watch/types";
 
 function checked(iso: string | null): string {
-  return iso ? `checked ${iso.slice(0, 16).replace("T", " ")} UTC` : "not checked yet";
+  if (!iso) return "not checked yet";
+  const s = Math.max(0, Math.round((Date.now() - Date.parse(iso)) / 1000));
+  if (!Number.isFinite(s)) return "not checked yet";
+  if (s < 90) return "checked just now";
+  const m = Math.round(s / 60);
+  if (m < 60) return `checked ${m}m ago`;
+  const h = Math.round(m / 60);
+  return h < 48 ? `checked ${h}h ago` : `checked ${Math.round(h / 24)}d ago`;
 }
 
 const tone = (h: number | null) =>
