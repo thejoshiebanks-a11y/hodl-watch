@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { listWatches } from "@/lib/watch/store";
 import { recentEvents } from "@/lib/watch/events";
-import { getSettings } from "@/lib/watch/settings";
+import { getSettings, getTokenRulesMany } from "@/lib/watch/settings";
+import { mergeRules } from "@/lib/watch/alert-catalog";
 import { showInFeed } from "@/lib/watch/alert-filter";
 import { DEVICE_ID_PATTERN } from "@/lib/watch/types";
 
@@ -14,16 +15,19 @@ export async function GET(request: Request) {
   }
 
   try {
-    const [watches, settings] = await Promise.all([
-      listWatches(device),
+    const watches = await listWatches(device);
+    const [settings, overrides] = await Promise.all([
       getSettings(device),
+      getTokenRulesMany(device, watches.map((w) => w.mint)),
     ]);
     const lists = await Promise.all(
       watches.map((w) => recentEvents(w.mint, 20)),
     );
     const events = lists
       .flat()
-      .filter((e) => showInFeed(e, settings.rules))
+      .filter((e) =>
+        showInFeed(e, mergeRules(settings.rules, overrides[e.mint] ?? {})),
+      )
       .sort((a, b) => b.at.localeCompare(a.at))
       .slice(0, 50);
     return NextResponse.json({ events });

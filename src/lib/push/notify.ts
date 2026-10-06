@@ -1,7 +1,8 @@
 import { getRedis } from "@/lib/watch/redis";
 import type { WatchEvent } from "@/lib/watch/detect";
 import type { WatchEntry } from "@/lib/watch/types";
-import { getSettings } from "@/lib/watch/settings";
+import { getSettings, getTokenRules } from "@/lib/watch/settings";
+import { mergeRules } from "@/lib/watch/alert-catalog";
 import { wantsPush } from "@/lib/watch/alert-filter";
 import { SUB_DEVICES, sendPush } from "./send";
 
@@ -28,7 +29,11 @@ export async function notifyWatchers(
     const entry = await redis.hget<WatchEntry>(`watch:${device}`, mint);
     if (entry?.muted) continue;
 
-    const settings = await getSettings(device);
+    const [base, override] = await Promise.all([
+      getSettings(device),
+      getTokenRules(device, mint),
+    ]);
+    const settings = { ...base, rules: mergeRules(base.rules, override) };
     const wanted = sorted.filter((e) => wantsPush(e, settings));
     if (wanted.length === 0) continue;
 

@@ -101,3 +101,12 @@ export function sanitizeRules(input: unknown): AlertRules {
   }
   return out;
 }
+
+/** Per-token overrides sit on top of the device's global rules, kind by kind. */
+export function mergeRules(global: AlertRules, override: AlertRules): AlertRules {
+  const out: AlertRules = { ...global };
+  for (const [kind, rule] of Object.entries(override)) {
+    out[kind] = { ...global[kind], ...rule };
+  }
+  return out;
+}
