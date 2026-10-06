@@ -2,6 +2,7 @@ import { getRedis } from "@/lib/watch/redis";
 import type { WatchEvent } from "@/lib/watch/detect";
 import type { WatchEntry } from "@/lib/watch/types";
 import { getSettings } from "@/lib/watch/settings";
+import { wantsPush } from "@/lib/watch/alert-filter";
 import { SUB_DEVICES, sendPush } from "./send";
 
 const COOLDOWN_SECONDS = 30 * 60;
@@ -12,10 +13,8 @@ export async function notifyWatchers(
   symbol: string | null,
   events: WatchEvent[],
 ): Promise<{ watchers: number; pushed: number }> {
-  const loud = events
-    .filter((e) => e.severity !== "info")
-    .sort((a, b) => RANK[a.severity] - RANK[b.severity]);
-  if (loud.length === 0) return { watchers: 0, pushed: 0 };
+  if (events.length === 0) return { watchers: 0, pushed: 0 };
+  const sorted = [...events].sort((a, b) => RANK[a.severity] - RANK[b.severity]);
 
   const redis = getRedis();
   const devices = await redis.smembers(`watchers:${mint}`);
@@ -25,15 +24,12 @@ export async function notifyWatchers(
     // Only devices that turned alerts on.
     if (!(await redis.sismember(SUB_DEVICES, device))) continue;
 
-    // Respect the per-token mute and the device's alert level.
+    // Respect the per-token mute and this device's own alert settings.
     const entry = await redis.hget<WatchEntry>(`watch:${device}`, mint);
     if (entry?.muted) continue;
 
     const settings = await getSettings(device);
-    const wanted =
-      settings.minSeverity === "critical"
-        ? loud.filter((e) => e.severity === "critical")
-        : loud;
+    const wanted = sorted.filter((e) => wantsPush(e, settings));
     if (wanted.length === 0) continue;
 
     const fresh: WatchEvent[] = [];

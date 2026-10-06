@@ -1,16 +1,21 @@
 import { getRedis } from "./redis";
+import { sanitizeRules, type AlertRules } from "./alert-catalog";
 
-export type AlertSettings = { minSeverity: "critical" | "warning" };
+export type AlertSettings = {
+  minSeverity: "critical" | "warning";
+  rules: AlertRules;
+};
 
-export const DEFAULT_SETTINGS: AlertSettings = { minSeverity: "warning" };
+export const DEFAULT_SETTINGS: AlertSettings = { minSeverity: "warning", rules: {} };
 
 const key = (device: string) => `settings:${device}`;
 
 export async function getSettings(device: string): Promise<AlertSettings> {
-  const s = await getRedis().get<AlertSettings>(key(device));
-  return s?.minSeverity === "critical" || s?.minSeverity === "warning"
-    ? s
-    : DEFAULT_SETTINGS;
+  const s = await getRedis().get<Partial<AlertSettings>>(key(device));
+  return {
+    minSeverity: s?.minSeverity === "critical" ? "critical" : "warning",
+    rules: sanitizeRules(s?.rules),
+  };
 }
 
 export async function putSettings(

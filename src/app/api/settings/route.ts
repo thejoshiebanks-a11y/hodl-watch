@@ -1,11 +1,17 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { sanitizeRules } from "@/lib/watch/alert-catalog";
 import { getSettings, putSettings } from "@/lib/watch/settings";
 import { DEVICE_ID_PATTERN } from "@/lib/watch/types";
 
 export const dynamic = "force-dynamic";
 
-const Body = z.object({ minSeverity: z.enum(["critical", "warning"]) });
+const Body = z
+  .object({
+    minSeverity: z.enum(["critical", "warning"]).optional(),
+    rules: z.record(z.string(), z.unknown()).optional(),
+  })
+  .refine((b) => b.minSeverity !== undefined || b.rules !== undefined);
 
 function device(request: Request): string | null {
   const id = request.headers.get("x-device-id") ?? "";
@@ -33,8 +39,16 @@ export async function PUT(request: Request) {
   }
 
   try {
-    await putSettings(id, parsed.data);
-    return NextResponse.json(parsed.data);
+    const current = await getSettings(id);
+    const next = {
+      minSeverity: parsed.data.minSeverity ?? current.minSeverity,
+      rules:
+        parsed.data.rules !== undefined
+          ? sanitizeRules(parsed.data.rules)
+          : current.rules,
+    };
+    await putSettings(id, next);
+    return NextResponse.json(next);
   } catch (e) {
     console.error("settings write failed:", e);
     return NextResponse.json({ error: "storage_unavailable" }, { status: 503 });
