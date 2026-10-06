@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { getDeviceId } from "@/lib/watch/device";
+import { AlertRulesPanel } from "./AlertRulesPanel";
 
 type Mode = "checking" | "unsupported" | "install-ios" | "denied" | "off" | "on";
 
@@ -219,9 +220,7 @@ export function AlertsCard() {
               </button>
             ))}
           </div>
-          <p className="mt-2 text-[11px] text-hodl-muted">
-            Info changes always stay in Observe and never push.
-          </p>
+          <AlertRulesPanel />
           <button type="button" onClick={sendTest} disabled={busy} className={btn}>
             Send a test alert
           </button>
