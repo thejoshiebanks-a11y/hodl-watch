@@ -4,6 +4,7 @@ import { runScan } from "@/lib/scan/run";
 import { toSnapshot } from "@/lib/watch/snapshot";
 import { detectEvents } from "@/lib/watch/detect";
 import { getSnapshot, putSnapshot, pushEvents } from "@/lib/watch/events";
+import { notifyWatchers } from "@/lib/push/notify";
 import type { WatchEntry } from "@/lib/watch/types";
 
 export const maxDuration = 60;
@@ -32,6 +33,11 @@ async function processMint(mint: string): Promise<Result> {
   const found = prev ? detectEvents(prev, curr) : [];
 
   await pushEvents(mint, curr.symbol, curr.at, found);
+  try {
+    await notifyWatchers(mint, curr.symbol, found);
+  } catch (e) {
+    console.error("cron: notify failed for", mint, e);
+  }
   await putSnapshot(curr);
 
   // Keep every watcher's saved Health fresh.
