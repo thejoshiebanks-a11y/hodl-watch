@@ -1,0 +1,3 @@
+export const HODL_LOGO_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48" fill="none"><defs><linearGradient id="g" x1="6" y1="4" x2="42" y2="44" gradientUnits="userSpaceOnUse"><stop stop-color="#38d6ff"/><stop offset="1" stop-color="#2f5bff"/></linearGradient></defs><path d="M24 2.5 42.5 13v22L24 45.5 5.5 35V13z" fill="url(#g)"/><path d="M24 2.5 42.5 13v22L24 45.5 5.5 35V13z" stroke="#fff" stroke-opacity=".35"/><path d="M17 14v20M31 14v20" stroke="#fff" stroke-width="3.6" stroke-linecap="round"/><path d="M17 25h4.5l2.5-6 3 11 2-5H31" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+
+export const hodlLogoDataUri = `data:image/svg+xml;utf8,${encodeURIComponent(HODL_LOGO_SVG)}`;
