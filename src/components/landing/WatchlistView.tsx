@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { TokenAlertsSheet } from "./TokenAlertsSheet";
 import { getDeviceId } from "@/lib/watch/device";
 import { ObserveFeed } from "./ObserveFeed";
 import { AlertsCard } from "./AlertsCard";
@@ -27,6 +28,7 @@ const tone = (h: number | null) =>
         : "text-rose-300";
 
 export function WatchlistView({ onScan }: { onScan: (mint: string) => void }) {
+  const [rulesFor, setRulesFor] = useState<string | null>(null);
   const [items, setItems] = useState<WatchEntry[] | null>(null);
   const [failed, setFailed] = useState(false);
   const [note, setNote] = useState<string | null>(null);
@@ -155,6 +157,21 @@ export function WatchlistView({ onScan }: { onScan: (mint: string) => void }) {
               >
                 {w.muted ? "🔕" : "🔔"}
               </button>
+              <button
+                type="button"
+                onClick={() => setRulesFor(w.mint)}
+                aria-label={`Alert settings for ${w.symbol ?? "token"}`}
+                className="shrink-0 p-2 text-lg"
+              >
+                ⚙️
+              </button>
+              {rulesFor === w.mint && (
+                <TokenAlertsSheet
+                  mint={w.mint}
+                  symbol={w.symbol}
+                  onClose={() => setRulesFor(null)}
+                />
+              )}
               <button
                 type="button"
                 onClick={() => remove(w.mint)}
