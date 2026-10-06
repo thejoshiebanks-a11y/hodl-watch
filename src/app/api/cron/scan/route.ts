@@ -5,6 +5,7 @@ import { toSnapshot, type WatchSnapshot } from "@/lib/watch/snapshot";
 import { detectEvents } from "@/lib/watch/detect";
 import { putSnapshot, pushEvents } from "@/lib/watch/events";
 import { notifyWatchers } from "@/lib/push/notify";
+import { updatePeak } from "@/lib/watch/peaks";
 
 export const maxDuration = 60;
 export const dynamic = "force-dynamic";
@@ -36,6 +37,7 @@ async function processMint(
   }
 
   const curr = toSnapshot(outcome.data);
+  await updatePeak(mint, curr.priceUsd, curr.liquidityUsd, curr.at);
   const found = prev ? detectEvents(prev, curr) : [];
 
   await pushEvents(mint, curr.symbol, curr.at, found);

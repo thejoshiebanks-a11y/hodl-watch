@@ -2,6 +2,7 @@ import { getDexScreenerSnapshot } from "@/lib/providers/market/dexscreener";
 import { getRugcheckIdentity } from "@/lib/providers/risk/rugcheck";
 import { POOL_PATTERN, getCandles } from "@/lib/providers/market/candles";
 import { calculateHealth } from "@/health/score/calculate";
+import { getPeak } from "@/lib/watch/peaks";
 import type { Candle } from "@/lib/types/chart";
 import type { ScanSuccess } from "@/lib/types/scan";
 
@@ -27,7 +28,8 @@ export async function runScan(mint: string): Promise<ScanOutcome> {
     candles = c.ok ? c.body.candles : null;
   }
 
-  const health = calculateHealth(market, identity, candles);
+  const peak = await getPeak(mint);
+  const health = calculateHealth(market, identity, candles, peak);
 
   return {
     ok: true,

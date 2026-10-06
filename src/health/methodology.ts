@@ -54,7 +54,39 @@ export const CHECKS: CheckInfo[] = [
 ];
 
 export const VERSION_HISTORY: { version: string; notes: string }[] = [
+  { version: "health-v0.2.0", notes: "Added score caps. A serious red flag now sets a ceiling the score cannot exceed, whatever the average says. Missing security or liquidity data and thin coverage also cap the score. Caps are provisional and are shown next to the score." },
   { version: "health-v0.1.2", notes: "Seven domains and 26 checks. Flow falls back to a 6-hour window when the last hour is too thin. Holder checks exclude known pools. Results are labelled Partial when coverage is low or Liquidity or Security was not observed." },
   { version: "health-v0.1.1", notes: "Added buy/sell flow from transaction counts, with N/A below 20 trades." },
   { version: "health-v0.1", notes: "First version: four groups and seven checks." },
+];
+
+export type CapInfo = { flag: string; ceiling: string };
+
+// Provisional ceilings. The final score is the lower of the average and the
+// lowest ceiling that applies. Keep this list in step with score/caps.ts.
+export const CAPS: CapInfo[] = [
+  { flag: "RugCheck marks the token as rugged", ceiling: "1.0" },
+  { flag: "Price down 70% or more in 24h", ceiling: "2.0" },
+  { flag: "Price down 50% or more in 24h", ceiling: "3.5" },
+  { flag: "Price down 50% or more in 6h", ceiling: "3.0" },
+  { flag: "Price down 40% or more in the last hour", ceiling: "3.0" },
+  { flag: "Liquidity down 70% or more from its recorded peak", ceiling: "2.0" },
+  { flag: "Liquidity down 50% or more from its recorded peak", ceiling: "3.5" },
+  { flag: "Price down 80% or more from its recorded peak", ceiling: "2.5" },
+  { flag: "Price down 60% or more from its recorded peak", ceiling: "4.0" },
+  { flag: "Liquidity under $5,000", ceiling: "3.0" },
+  { flag: "Liquidity under $20,000", ceiling: "5.5" },
+  { flag: "Mint authority still set", ceiling: "4.5" },
+  { flag: "Freeze authority still set", ceiling: "5.0" },
+  { flag: "Transfer fee above 5%", ceiling: "3.0" },
+  { flag: "Any transfer fee", ceiling: "5.5" },
+  { flag: "One non-pool wallet holds 50% or more", ceiling: "3.0" },
+  { flag: "One non-pool wallet holds 30% or more", ceiling: "5.0" },
+  { flag: "Insiders hold 40% or more", ceiling: "3.5" },
+  { flag: "Insiders hold 20% or more", ceiling: "5.5" },
+  { flag: "Pool under 1 hour old", ceiling: "5.0" },
+  { flag: "Pool under 24 hours old", ceiling: "6.5" },
+  { flag: "Under 30% buys in the last hour (30+ trades)", ceiling: "5.5" },
+  { flag: "Security or liquidity could not be checked", ceiling: "5.0" },
+  { flag: "Fewer than 60% of checks observed", ceiling: "6.0" },
 ];

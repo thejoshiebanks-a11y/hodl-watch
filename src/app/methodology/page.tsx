@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { LegalShell, Section } from "@/components/LegalShell";
 import type { HealthGroup } from "@/health/factors/types";
-import { CHECKS, DOMAIN_INFO, VERSION_HISTORY } from "@/health/methodology";
+import { CAPS, CHECKS, DOMAIN_INFO, VERSION_HISTORY } from "@/health/methodology";
 import {
   HEALTH_GROUP_WEIGHTS,
   HEALTH_VERSION,
@@ -32,8 +32,7 @@ export default function MethodologyPage() {
           does not mean it will fail. It is not financial advice.
         </p>
         <p>
-          When data is missing, the check shows N/A and is left out. It is never counted as zero
-          and never counted as good.
+          When data is missing, the check shows N/A and is left out of the average. It is never counted as zero. But a token whose Security or Liquidity could not be checked, or with under 60% of checks observed, is capped (see Score caps), so unknowns cannot make a token look healthy.
         </p>
       </Section>
 
@@ -48,6 +47,26 @@ export default function MethodologyPage() {
             <div key={d} className="flex items-center justify-between px-4 py-2.5">
               <span className="text-hodl-text">{DOMAIN_INFO[d].label}</span>
               <span>{Math.round(HEALTH_GROUP_WEIGHTS[d] * 100)}%</span>
+            </div>
+          ))}
+        </div>
+      </Section>
+
+      <Section title="Score caps">
+        <p>
+          An average can hide a serious problem, so certain red flags set a ceiling. The final
+          score is the lower of the average and the lowest ceiling that applies. A rugged token can
+          never score above 1, whatever else looks fine. The score screen shows which cap applied.
+        </p>
+        <p>
+          The ceilings are provisional. Flags that compare against a recorded peak apply only to
+          tokens that have been on a watchlist, because that is when HODL records the peak.
+        </p>
+        <div className="hodl-card divide-y divide-white/10 text-sm">
+          {CAPS.map((c) => (
+            <div key={c.flag} className="flex items-center justify-between gap-3 px-4 py-2.5">
+              <span className="text-hodl-text">{c.flag}</span>
+              <span className="shrink-0">max {c.ceiling}</span>
             </div>
           ))}
         </div>

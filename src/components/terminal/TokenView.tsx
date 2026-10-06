@@ -296,6 +296,15 @@ export function TokenView({ d, onBack }: { d: Data; onBack: () => void }) {
                   <p className="mt-1 text-xs text-hodl-muted">
                     {d.health.version.replace("health-", "Health ")} · {seen}/{d.factors.length} checks observed{partialReason ? ` · ${partialReason}` : ""}
                   </p>
+                  {d.health.caps &&
+                    d.health.caps.length > 0 &&
+                    typeof d.health.score === "number" &&
+                    typeof d.health.uncappedScore === "number" &&
+                    d.health.score < d.health.uncappedScore && (
+                      <p className="mt-1 text-xs text-amber-300">
+                        Capped at {d.health.caps[0].max.toFixed(1)}: {d.health.caps[0].reason}
+                      </p>
+                    )}
                 </div>
               </div>
               <div className="mt-4 rounded-xl border border-white/10 bg-black/20 px-3">
