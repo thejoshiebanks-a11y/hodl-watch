@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { getDeviceId } from "@/lib/watch/device";
+import { ObserveFeed } from "./ObserveFeed";
 import type { WatchEntry } from "@/lib/watch/types";
 
 function checked(iso: string | null): string {
@@ -67,7 +68,9 @@ export function WatchlistView({ onScan }: { onScan: (mint: string) => void }) {
 
   return (
     <section className="mt-6">
-      <p className="mb-3 text-xl font-bold">Your watchlist</p>
+      <ObserveFeed />
+
+      <p className="mb-3 mt-8 text-xl font-bold">Your watchlist</p>
 
       {failed ? (
         <p className="hodl-card px-4 py-6 text-center text-xs text-hodl-muted">
