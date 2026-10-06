@@ -103,7 +103,7 @@ export default function MethodologyPage() {
         </p>
       </Section>
 
-      <Section title="Version history">
+      <Section title="Version history" id="version-history">
         <div className="hodl-card divide-y divide-white/10">
           {VERSION_HISTORY.map((v) => (
             <div key={v.version} className="px-4 py-3">

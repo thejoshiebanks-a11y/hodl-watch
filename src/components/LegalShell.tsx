@@ -2,9 +2,17 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { Footer } from "./Footer";
 
-export function Section({ title, children }: { title: string; children: ReactNode }) {
+export function Section({
+  title,
+  id,
+  children,
+}: {
+  title: string;
+  id?: string;
+  children: ReactNode;
+}) {
   return (
-    <section>
+    <section id={id}>
       <h2 className="text-lg font-bold">{title}</h2>
       <div className="mt-2 space-y-3 text-sm leading-relaxed text-hodl-muted">{children}</div>
     </section>
