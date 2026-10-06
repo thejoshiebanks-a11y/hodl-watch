@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { SolanaMintSchema } from "@/lib/validation/solana";
-import { addWatch, listWatches, removeWatch } from "@/lib/watch/store";
+import { addWatch, listWatches, removeWatch, setMuted } from "@/lib/watch/store";
 import { DEVICE_ID_PATTERN } from "@/lib/watch/types";
 
 function deviceFrom(request: Request): string | null {
@@ -67,6 +67,25 @@ export async function DELETE(request: Request) {
     return NextResponse.json({ ok: true });
   } catch (e) {
     console.error("watch remove failed:", e);
+    return err("storage_unavailable", 503);
+  }
+}
+
+const MuteSchema = z.object({ mint: SolanaMintSchema, muted: z.boolean() });
+
+export async function PATCH(request: Request) {
+  const device = deviceFrom(request);
+  if (!device) return err("invalid_device", 400);
+
+  const parsed = MuteSchema.safeParse(await request.json().catch(() => null));
+  if (!parsed.success) return err("invalid_body", 400);
+
+  try {
+    const ok = await setMuted(device, parsed.data.mint, parsed.data.muted);
+    if (!ok) return err("not_found", 404);
+    return NextResponse.json({ ok: true });
+  } catch (e) {
+    console.error("watch mute failed:", e);
     return err("storage_unavailable", 503);
   }
 }

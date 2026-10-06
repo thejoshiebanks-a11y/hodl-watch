@@ -6,6 +6,7 @@ export type WatchEntry = {
   addedAt: string;
   lastHealth: number | null;
   lastScanAt: string | null;
+  muted?: boolean;
 };
 
 export const MAX_WATCHES_PER_DEVICE = 25;

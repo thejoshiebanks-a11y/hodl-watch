@@ -1,5 +1,7 @@
 import { getRedis } from "@/lib/watch/redis";
 import type { WatchEvent } from "@/lib/watch/detect";
+import type { WatchEntry } from "@/lib/watch/types";
+import { getSettings } from "@/lib/watch/settings";
 import { SUB_DEVICES, sendPush } from "./send";
 
 const COOLDOWN_SECONDS = 30 * 60;
@@ -23,8 +25,19 @@ export async function notifyWatchers(
     // Only devices that turned alerts on.
     if (!(await redis.sismember(SUB_DEVICES, device))) continue;
 
+    // Respect the per-token mute and the device's alert level.
+    const entry = await redis.hget<WatchEntry>(`watch:${device}`, mint);
+    if (entry?.muted) continue;
+
+    const settings = await getSettings(device);
+    const wanted =
+      settings.minSeverity === "critical"
+        ? loud.filter((e) => e.severity === "critical")
+        : loud;
+    if (wanted.length === 0) continue;
+
     const fresh: WatchEvent[] = [];
-    for (const e of loud) {
+    for (const e of wanted) {
       const claimed = await redis.set(`pushcd:${device}:${mint}:${e.kind}`, 1, {
         nx: true,
         ex: COOLDOWN_SECONDS,

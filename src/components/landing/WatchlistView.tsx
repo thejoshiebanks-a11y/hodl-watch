@@ -54,6 +54,28 @@ export function WatchlistView({ onScan }: { onScan: (mint: string) => void }) {
     };
   }, []);
 
+  async function toggleMute(mint: string, muted: boolean) {
+    const device = getDeviceId();
+    if (!device) return;
+    setNote(null);
+    setItems((cur) =>
+      cur ? cur.map((w) => (w.mint === mint ? { ...w, muted } : w)) : cur,
+    );
+    try {
+      const res = await fetch("/api/watch", {
+        method: "PATCH",
+        headers: { "content-type": "application/json", "x-device-id": device },
+        body: JSON.stringify({ mint, muted }),
+      });
+      if (!res.ok) throw new Error("mute failed");
+    } catch {
+      setItems((cur) =>
+        cur ? cur.map((w) => (w.mint === mint ? { ...w, muted: !muted } : w)) : cur,
+      );
+      setNote("Couldn't update that token. Try again.");
+    }
+  }
+
   async function remove(mint: string) {
     const device = getDeviceId();
     if (!device) return;
@@ -115,7 +137,7 @@ export function WatchlistView({ onScan }: { onScan: (mint: string) => void }) {
                 <div className="min-w-0 flex-1">
                   <p className="truncate font-bold">{w.name ?? w.symbol ?? "Token"}</p>
                   <p className="truncate text-xs text-hodl-muted">
-                    ${w.symbol ?? "—"} · {checked(w.lastScanAt)}
+                    ${w.symbol ?? "—"} · {checked(w.lastScanAt)}{w.muted ? " · muted" : ""}
                   </p>
                 </div>
                 <div className="text-right">
@@ -124,6 +146,14 @@ export function WatchlistView({ onScan }: { onScan: (mint: string) => void }) {
                   </p>
                   <p className="text-[10px] uppercase tracking-[0.12em] text-hodl-muted">Health</p>
                 </div>
+              </button>
+              <button
+                type="button"
+                onClick={() => toggleMute(w.mint, !w.muted)}
+                aria-label={w.muted ? `Unmute ${w.symbol ?? "token"}` : `Mute ${w.symbol ?? "token"}`}
+                className={`shrink-0 p-2 text-lg ${w.muted ? "opacity-50" : ""}`}
+              >
+                {w.muted ? "🔕" : "🔔"}
               </button>
               <button
                 type="button"

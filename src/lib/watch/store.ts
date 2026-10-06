@@ -76,3 +76,15 @@ export async function removeWatch(device: string, mint: string) {
     await redis.srem(ALL_MINTS, mint);
   }
 }
+
+export async function setMuted(
+  device: string,
+  mint: string,
+  muted: boolean,
+): Promise<boolean> {
+  const redis = getRedis();
+  const entry = await redis.hget<WatchEntry>(listKey(device), mint);
+  if (!entry) return false;
+  await redis.hset(listKey(device), { [mint]: { ...entry, muted } });
+  return true;
+}

@@ -36,6 +36,7 @@ export function AlertsCard() {
   const [mode, setMode] = useState<Mode>(() => detect() ?? "checking");
   const [busy, setBusy] = useState(false);
   const [note, setNote] = useState<string | null>(null);
+  const [minSev, setMinSev] = useState<"critical" | "warning">("warning");
 
   useEffect(() => {
     if (detect() !== null) return;
@@ -53,6 +54,41 @@ export function AlertsCard() {
       cancelled = true;
     };
   }, []);
+
+  useEffect(() => {
+    if (mode !== "on") return;
+    const device = getDeviceId();
+    if (!device) return;
+    let cancelled = false;
+    fetch("/api/settings", { headers: { "x-device-id": device } })
+      .then((r) => (r.ok ? r.json() : Promise.reject(new Error("settings failed"))))
+      .then((j: { minSeverity: "critical" | "warning" }) => {
+        if (!cancelled) setMinSev(j.minSeverity);
+      })
+      .catch(() => undefined);
+    return () => {
+      cancelled = true;
+    };
+  }, [mode]);
+
+  async function saveSev(next: "critical" | "warning") {
+    const device = getDeviceId();
+    if (!device || next === minSev) return;
+    const before = minSev;
+    setMinSev(next);
+    setNote(null);
+    try {
+      const res = await fetch("/api/settings", {
+        method: "PUT",
+        headers: { "content-type": "application/json", "x-device-id": device },
+        body: JSON.stringify({ minSeverity: next }),
+      });
+      if (!res.ok) throw new Error("save failed");
+    } catch {
+      setMinSev(before);
+      setNote("Couldn't save that setting. Try again.");
+    }
+  }
 
   async function enable() {
     const device = getDeviceId();
@@ -158,6 +194,33 @@ export function AlertsCard() {
         <>
           <p className="mt-3 text-sm text-hodl-muted">
             Alerts are on for this browser. HODL only pings you when something material changes.
+          </p>
+          <p className="mt-4 text-[10px] uppercase tracking-[0.18em] text-hodl-muted">
+            Push me for
+          </p>
+          <div className="mt-2 grid grid-cols-2 gap-2">
+            {(
+              [
+                ["warning", "Critical + Warnings"],
+                ["critical", "Critical only"],
+              ] as const
+            ).map(([v, label]) => (
+              <button
+                key={v}
+                type="button"
+                onClick={() => saveSev(v)}
+                className={
+                  minSev === v
+                    ? "rounded-xl border border-hodl-cyan/50 bg-hodl-cyan/10 py-2.5 text-xs font-semibold text-hodl-cyan"
+                    : "rounded-xl border border-hodl-line py-2.5 text-xs text-hodl-muted"
+                }
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+          <p className="mt-2 text-[11px] text-hodl-muted">
+            Info changes always stay in Observe and never push.
           </p>
           <button type="button" onClick={sendTest} disabled={busy} className={btn}>
             Send a test alert
