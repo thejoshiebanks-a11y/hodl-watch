@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
@@ -15,7 +15,11 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "HODL | Solana token intelligence",
   description: "Scan any Solana token for an explainable Health score, a live chart and the evidence behind it.",
+  appleWebApp: { capable: true, title: "HODL", statusBarStyle: "black" },
+  icons: { apple: "/pwa-icon?s=180" },
 };
+
+export const viewport: Viewport = { themeColor: "#050b24" };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
