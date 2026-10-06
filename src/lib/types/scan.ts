@@ -17,7 +17,8 @@ export type ScanError = {
   code:
     | "INVALID_MINT"
     | "TOKEN_NOT_FOUND"
-    | "SCAN_FAILED";
+    | "SCAN_FAILED"
+    | "RATE_LIMITED";
 };
 
 export type ScanResponse = ScanSuccess | ScanError;

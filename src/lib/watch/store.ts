@@ -1,4 +1,5 @@
 import { getRedis } from "./redis";
+import type { WatchSnapshot } from "./snapshot";
 import { MAX_WATCHES_PER_DEVICE, type WatchEntry } from "./types";
 
 const listKey = (device: string) => `watch:${device}`;
@@ -11,13 +12,24 @@ export type AddInput = Pick<
 > & { health?: number | null };
 
 export async function listWatches(device: string): Promise<WatchEntry[]> {
-  const all = await getRedis().hgetall<Record<string, WatchEntry>>(
-    listKey(device),
-  );
+  const redis = getRedis();
+  const all = await redis.hgetall<Record<string, WatchEntry>>(listKey(device));
   if (!all) return [];
-  return Object.values(all).sort((a, b) =>
-    b.addedAt.localeCompare(a.addedAt),
+  const entries = Object.values(all);
+  if (entries.length === 0) return [];
+
+  const snaps = await redis.mget<(WatchSnapshot | null)[]>(
+    ...entries.map((w) => `snap:${w.mint}`),
   );
+
+  return entries
+    .map((w, i) => {
+      const s = snaps[i];
+      return s
+        ? { ...w, lastHealth: s.health ?? w.lastHealth, lastScanAt: s.at }
+        : w;
+    })
+    .sort((a, b) => b.addedAt.localeCompare(a.addedAt));
 }
 
 // Upsert: adds a new watch, or refreshes the saved Health of an existing one.

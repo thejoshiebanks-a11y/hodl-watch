@@ -56,7 +56,7 @@ export function ObserveFeed() {
     pull();
     const id = setInterval(() => {
       if (!document.hidden) pull();
-    }, 60_000);
+    }, 120_000);
 
     return () => {
       cancelled = true;

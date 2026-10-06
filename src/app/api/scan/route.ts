@@ -1,8 +1,20 @@
 import { NextResponse } from "next/server";
 import { SolanaMintSchema } from "@/lib/validation/solana";
-import { runScan } from "@/lib/scan/run";
+import { getScanCached } from "@/lib/scan/cache";
+import { rateLimit } from "@/lib/rate-limit";
 
 export async function POST(request: Request) {
+  const limit = await rateLimit(request, "scan", 30, 60);
+  if (!limit.ok) {
+    return NextResponse.json(
+      {
+        error: "Too many scans. Wait a moment and try again.",
+        code: "RATE_LIMITED",
+      },
+      { status: 429, headers: { "Retry-After": String(limit.retryAfter) } },
+    );
+  }
+
   try {
     const body = await request.json();
 
@@ -15,7 +27,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const outcome = await runScan(result.data);
+    const outcome = await getScanCached(result.data);
 
     if (!outcome.ok) {
       return NextResponse.json(
