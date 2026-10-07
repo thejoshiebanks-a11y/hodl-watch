@@ -1,34 +1,37 @@
 @import "tailwindcss";
 
 @theme {
-  --color-hodl-bg: #03061a;
-  --color-hodl-panel: #09123a;
-  --color-hodl-line: rgb(70 130 255 / 0.4);
-  --color-hodl-blue: #2f5bff;
-  --color-hodl-cyan: #38d6ff;
-  --color-hodl-text: #f2f6ff;
-  --color-hodl-muted: #9db0e6;
+  --color-hodl-bg: #04060a;
+  --color-hodl-panel: #0a0f16;
+  --color-hodl-line: rgb(120 170 220 / 0.16);
+  --color-hodl-blue: #1f8bff;
+  --color-hodl-cyan: #2de2e6;
+  --color-hodl-green: #19e6a0;
+  --color-hodl-text: #f1f5fb;
+  --color-hodl-muted: #8b98ad;
 }
 
 body {
   background:
-    radial-gradient(760px 520px at 100% -6%, rgba(56, 120, 255, 0.4), transparent 62%),
-    radial-gradient(640px 520px at -12% 28%, rgba(124, 58, 237, 0.26), transparent 62%),
-    #02051a;
+    radial-gradient(700px 460px at 100% -8%, rgba(31, 139, 255, 0.16), transparent 62%),
+    radial-gradient(560px 460px at -14% 30%, rgba(45, 226, 230, 0.07), transparent 62%),
+    #03050a;
   background-attachment: fixed;
-  color: #f2f6ff;
+  color: #f1f5fb;
   font-family: var(--font-geist-sans), system-ui, sans-serif;
 }
 
 .hodl-card {
-  border: 1px solid rgb(70 130 255 / 0.38);
+  border: 1px solid rgb(120 170 220 / 0.16);
   border-radius: 1rem;
-  background: linear-gradient(180deg, rgba(11, 22, 70, 0.78), rgba(4, 8, 30, 0.92));
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0) 38%),
+    linear-gradient(180deg, rgba(14, 20, 30, 0.9), rgba(5, 8, 13, 0.96));
   box-shadow:
-    0 14px 44px rgba(20, 60, 200, 0.28),
-    inset 0 1px 0 rgba(255, 255, 255, 0.07);
+    0 14px 40px rgba(0, 0, 0, 0.55),
+    inset 0 1px 0 rgba(255, 255, 255, 0.09);
 }
 
 .hodl-glow {
-  text-shadow: 0 0 20px rgba(56, 214, 255, 0.5);
+  text-shadow: 0 0 18px rgba(45, 226, 230, 0.45);
 }
