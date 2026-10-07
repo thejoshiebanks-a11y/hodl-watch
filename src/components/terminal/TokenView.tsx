@@ -269,7 +269,7 @@ export function TokenView({ d, onBack }: { d: Data; onBack: () => void }) {
       </section>
 
       <div className="mt-5 space-y-4">
-        {(view === "overview" || view === "chart") && <PriceChart pool={m.pairAddress} />}
+        {(view === "overview" || view === "chart") && <PriceChart pool={m.pairAddress} mint={m.mint} />}
 
         {view === "overview" && (
           <>
