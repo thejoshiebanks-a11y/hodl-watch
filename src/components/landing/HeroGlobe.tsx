@@ -229,12 +229,6 @@ export function HeroGlobe() {
 
         <ellipse cx={CX} cy="206" rx="50" ry="8" fill="#38d6ff" opacity=".3" filter="url(#hg-blur)" />
 
-        {/* Distant ridge behind the hand */}
-        <g opacity=".65">
-          <path d="M-10 206L8 198L22 190L36 197L50 193L64 199L80 197L100 199L120 197L136 199L150 192L166 186L180 194L196 199L210 204V232H-10Z" fill="url(#hg-rock)" />
-          <path d="M-10 206L8 198L22 190L36 197L50 193L64 199L80 197L100 199L120 197L136 199L150 192L166 186L180 194L196 199L210 204" fill="none" stroke="#38d6ff" strokeOpacity=".35" strokeWidth=".7" strokeLinejoin="round" />
-        </g>
-
         {/* Robot hand: palm, wrist, jointed chrome fingers, knuckle guard */}
         <g transform="translate(100 214) scale(1.1) translate(-100 -214)">
           <g className="hg-rhand">
@@ -256,13 +250,6 @@ export function HeroGlobe() {
             <circle cx="100" cy="178" r="11" fill="url(#hg-core)" className="hg-tw" />
             <circle cx="100" cy="178" r="7.5" fill="none" stroke="#7fe8ff" strokeOpacity=".7" strokeWidth=".8" />
           </g>
-        </g>
-
-        {/* Rocky ground the hand rises from */}
-        <g>
-          <path d="M-10 214L2 208L14 204L28 195L40 201L52 204L64 207L78 205L90 208L100 204L112 208L124 205L138 207L150 203L162 200L174 193L188 200L200 206L210 210V232H-10Z" fill="url(#hg-rock)" />
-          <path d="M-10 214L2 208L14 204L28 195L40 201L52 204L64 207L78 205L90 208L100 204L112 208L124 205L138 207L150 203L162 200L174 193L188 200L200 206L210 210" fill="none" stroke="#38d6ff" strokeOpacity=".6" strokeWidth=".9" strokeLinejoin="round" />
-          <path d="M28 195L34 214M40 201L36 218M64 207L60 221M138 207L144 222M162 200L158 216M174 193L180 212" stroke="#38d6ff" strokeOpacity=".14" strokeWidth=".6" />
         </g>
 
         {SPARKS.map(([x, y, delay]) => (

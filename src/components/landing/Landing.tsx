@@ -343,6 +343,36 @@ export function Landing({
             <div className="pointer-events-none absolute -top-3 right-0 z-0 w-[150px]">
               <HeroGlobe />
             </div>
+            <svg
+              aria-hidden
+              viewBox="0 0 400 50"
+              preserveAspectRatio="none"
+              className="pointer-events-none absolute inset-x-0 -bottom-1 z-[1] h-11 w-full"
+            >
+              <defs>
+                <linearGradient id="rg-fill" x1="0" y1="0" x2="0" y2="1">
+                  <stop stopColor="#223551" />
+                  <stop offset=".5" stopColor="#0a111b" />
+                  <stop offset="1" stopColor="#03050a" stopOpacity="0" />
+                </linearGradient>
+                <linearGradient id="rg-line" x1="0" y1="0" x2="1" y2="0">
+                  <stop stopColor="#38d6ff" stopOpacity="0" />
+                  <stop offset=".3" stopColor="#38d6ff" stopOpacity=".18" />
+                  <stop offset=".65" stopColor="#38d6ff" stopOpacity=".6" />
+                  <stop offset="1" stopColor="#38d6ff" stopOpacity=".75" />
+                </linearGradient>
+                <linearGradient id="rg-fade" x1="0" y1="0" x2="1" y2="0">
+                  <stop stopColor="#fff" stopOpacity="0" />
+                  <stop offset=".35" stopColor="#fff" stopOpacity=".3" />
+                  <stop offset=".7" stopColor="#fff" stopOpacity="1" />
+                </linearGradient>
+                <mask id="rg-mask">
+                  <rect width="400" height="50" fill="url(#rg-fade)" />
+                </mask>
+              </defs>
+              <path d="M0 42C50 42 95 41 140 39C190 37 225 35 262 29C292 24 318 22 345 24C370 26 388 29 400 31V50H0Z" fill="url(#rg-fill)" mask="url(#rg-mask)" />
+              <path d="M0 42C50 42 95 41 140 39C190 37 225 35 262 29C292 24 318 22 345 24C370 26 388 29 400 31" fill="none" stroke="url(#rg-line)" strokeWidth="1" vectorEffect="non-scaling-stroke" />
+            </svg>
             <div className="relative z-10">
               <p className="text-[11px] font-bold uppercase tracking-[0.3em] text-hodl-muted">Token Surveillance</p>
               <h1 className="mt-3 text-[clamp(24px,7.2vw,29px)] font-black leading-[1.05] tracking-tight">
