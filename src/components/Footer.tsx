@@ -87,6 +87,18 @@ export function Footer() {
           not predict price. Trading memecoins is very high risk.
         </p>
         <p className="mt-2">© {new Date().getFullYear()} HODL</p>
+        <p className="mt-2">
+          Charts powered by{" "}
+          <a
+            href="https://www.tradingview.com/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="underline transition-colors hover:text-hodl-cyan"
+          >
+            TradingView
+          </a>{" "}
+          Lightweight Charts™.
+        </p>
       </div>
     </footer>
   );

@@ -94,6 +94,7 @@ export function PriceChart({ pool, mint }: { pool: string | null; mint?: string 
       layout: {
         background: { type: ColorType.Solid, color: "transparent" },
         textColor: "#7f8fbf",
+        attributionLogo: false,
         fontSize: 11,
       },
       grid: {
