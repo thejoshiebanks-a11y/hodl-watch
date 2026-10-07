@@ -1,5 +1,6 @@
 "use client";
 
+import { PanelCard } from "@/components/terminal/PanelCard";
 import { raiseRiskTone } from "@/health/score/risk";
 import { useState, type CSSProperties } from "react";
 import type { ScanSuccess } from "@/lib/types/scan";
@@ -336,6 +337,8 @@ export function TokenView({ d, onBack }: { d: Data; onBack: () => void }) {
                 })}
               </div>
             </section>
+
+            <PanelCard d={d} />
 
             <section className="hodl-card p-4">
               <div className="flex items-center justify-between">
