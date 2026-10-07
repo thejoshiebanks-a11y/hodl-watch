@@ -310,7 +310,10 @@ export async function getDexScreenerSnapshot(
   let dexError: unknown = null;
   try {
     const snap = await getDexScreenerRaw(mint);
-    if (snap) return snap;
+    if (snap) {
+      const img = await getGeckoImage(mint);
+      return { ...snap, imageUrl: img ?? snap.imageUrl ?? null };
+    }
   } catch (e) {
     dexError = e;
   }
@@ -322,4 +325,27 @@ export async function getDexScreenerSnapshot(
   }
   if (dexError) throw dexError;
   return null;
+}
+
+
+// GeckoTerminal is the primary source for token profile images.
+async function getGeckoImage(mint: string): Promise<string | null> {
+  try {
+    const res = await fetch(
+      `https://api.geckoterminal.com/api/v2/networks/solana/tokens/${mint}`,
+      {
+        headers: { Accept: "application/json;version=20230302" },
+        next: { revalidate: 86400 },
+        signal: AbortSignal.timeout(5000),
+      },
+    );
+    if (!res.ok) return null;
+    const json = (await res.json()) as {
+      data?: { attributes?: { image_url?: unknown } };
+    };
+    const url = json.data?.attributes?.image_url;
+    return typeof url === "string" && url.startsWith("http") ? url : null;
+  } catch {
+    return null;
+  }
 }
