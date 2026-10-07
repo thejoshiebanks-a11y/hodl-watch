@@ -1,5 +1,6 @@
 "use client";
 
+import { raiseRiskLabel } from "@/health/score/risk";
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { WatchlistView } from "./WatchlistView";
 import { Footer } from "@/components/Footer";
@@ -148,13 +149,14 @@ function Featured({ d, onScan }: { d: Data; onScan: (m: string) => void }) {
   const m = d.market;
   const liq = summarizeHealthGroups(d.factors).find((g) => g.group === "LIQUIDITY")?.score ?? null;
   const rows = riskRows(d);
-  const risk = rows.some((r) => r[2] === "bad")
+  const baseRisk = rows.some((r) => r[2] === "bad")
     ? "High"
     : rows.some((r) => r[2] === "mid")
       ? "Moderate"
       : rows.every((r) => r[2] === "na")
         ? "N/A"
         : "Low";
+  const risk = raiseRiskLabel(baseRisk, d.health.caps);
   const lp = d.identity.lpLockedPctWeighted;
   const observed = d.factors.filter((f) => f.status === "AVAILABLE").length;
   const partial = d.health.partial || d.health.missingCritical;

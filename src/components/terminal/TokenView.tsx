@@ -1,5 +1,6 @@
 "use client";
 
+import { raiseRiskTone } from "@/health/score/risk";
 import { useState, type CSSProperties } from "react";
 import type { ScanSuccess } from "@/lib/types/scan";
 import { summarizeHealthGroups } from "@/health/score/groups";
@@ -168,13 +169,14 @@ export function TokenView({ d, onBack }: { d: Data; onBack: () => void }) {
       ? `${missingCrit.join(" and ")} not observed`
       : `only ${Math.round(d.health.coverage * 100)}% of checks observed`;
 
-  const worst: [string, string] = rows.some((r) => r[2] === "bad")
+  const baseWorst: [string, string] = rows.some((r) => r[2] === "bad")
     ? ["High", "text-red-300"]
     : rows.some((r) => r[2] === "mid")
       ? ["Moderate", "text-amber-300"]
       : rows.every((r) => r[2] === "na")
         ? [NA, "text-hodl-muted"]
         : ["Low", "text-emerald-300"];
+  const worst = raiseRiskTone(baseWorst, d.health.caps);
 
   const urls = [
     m.imageUrl ?? "",
