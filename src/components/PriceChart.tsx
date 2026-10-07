@@ -75,7 +75,7 @@ export function PriceChart({ pool, mint }: { pool: string | null; mint?: string 
   const [hasData, setHasData] = useState(false);
   const [events, setEvents] = useState<ChartEvent[]>([]);
   const [bubbles, setBubbles] = useState<Bubble[]>([]);
-  const [openKey, setOpenKey] = useState<string | null>(null);
+  const [openEvents, setOpenEvents] = useState<ChartEvent[] | null>(null);
   const [result, setResult] = useState<{
     key: string;
     status: "ready" | "error";
@@ -84,7 +84,6 @@ export function PriceChart({ pool, mint }: { pool: string | null; mint?: string 
 
   const key = `${pool}:${timeframe}`;
   const status = result?.key === key ? result.status : "loading";
-  const open = bubbles.find((b) => b.key === openKey) ?? null;
 
   useEffect(() => {
     const container = containerRef.current;
@@ -319,7 +318,7 @@ export function PriceChart({ pool, mint }: { pool: string | null; mint?: string 
       <div className="relative hodl-card overflow-hidden">
         <div ref={containerRef} className="h-[360px] w-full" />
 
-        <div className="pointer-events-none absolute inset-0">
+        <div className="pointer-events-none absolute inset-0 z-20">
           {bubbles.map((b) => {
             const top = b.events[0];
             const color = SEVERITY_COLOR[top.severity];
@@ -327,9 +326,9 @@ export function PriceChart({ pool, mint }: { pool: string | null; mint?: string 
               <button
                 key={b.key}
                 type="button"
-                onClick={() => setOpenKey(b.key === openKey ? null : b.key)}
+                onClick={() => setOpenEvents(b.events)}
                 aria-label={`${top.title}${b.events.length > 1 ? ` and ${b.events.length - 1} more` : ""}`}
-                className="pointer-events-auto absolute flex h-7 w-7 before:absolute before:-inset-2 before:content-[''] -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full text-[13px] leading-none"
+                className="pointer-events-auto touch-manipulation absolute flex h-7 w-7 before:absolute before:-inset-2 before:content-[''] -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full text-[13px] leading-none"
                 style={{
                   left: b.x,
                   top: b.y,
@@ -365,7 +364,7 @@ export function PriceChart({ pool, mint }: { pool: string | null; mint?: string 
           </span>
         )}
 
-        {open && <EventSheet events={open.events} onClose={() => setOpenKey(null)} />}
+        {openEvents && <EventSheet events={openEvents} onClose={() => setOpenEvents(null)} />}
 
         {!hasData && (
           <div className="absolute inset-0 flex items-center justify-center px-6 text-center text-xs text-hodl-muted">
