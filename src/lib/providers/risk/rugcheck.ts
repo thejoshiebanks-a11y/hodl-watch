@@ -87,6 +87,16 @@ const RugcheckResponseSchema = z.object({
     })
     .nullable()
     .optional(),
+
+  risks: z
+    .array(
+      z.object({
+        name: z.string().nullable().optional(),
+        level: z.string().nullable().optional(),
+      }),
+    )
+    .nullable()
+    .optional(),
 });
 
 function authorityStatus(
@@ -202,6 +212,11 @@ export async function getRugcheckIdentity(
     jupVerified: parsed.verification?.jup_verified ?? null,
     insiderHolderCount: parsed.graphInsidersDetected ?? null,
     transferFeePct: parsed.transferFee?.pct ?? null,
+    riskFlags: parsed.risks
+      ? parsed.risks.flatMap((r) =>
+          r.name ? [{ name: r.name, level: r.level ?? "info" }] : [],
+        )
+      : null,
     insiderNetworkCount: parsed.insiderNetworks
       ? parsed.insiderNetworks.length
       : null,

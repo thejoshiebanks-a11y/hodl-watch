@@ -31,6 +31,8 @@ export type TokenIdentitySnapshot = {
   poolLiquidityUsd: number | null;
   largestPoolLockedPct: number | null;
   transferFeePct: number | null;
+  /** RugCheck's own named red flags. Optional so older saved scans still type-check. */
+  riskFlags?: { name: string; level: string }[] | null;
   observedAt: string;
   provider: string;
 };

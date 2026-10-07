@@ -76,6 +76,18 @@ const UNLOCK: Record<string, string> = {
   crash_1h: "The 1h window rolls past the fall, or price recovers.",
 };
 
+// Flags we already score through our own checks, so they are not listed twice.
+const COVERED_FLAGS = new Set([
+  "Mint Authority still enabled",
+  "Freeze Authority still enabled",
+  "Single holder ownership",
+  "High ownership",
+  "Top 10 holders high ownership",
+  "High holder concentration",
+  "Low Liquidity",
+  "Permanent Control Enabled",
+]);
+
 const r1 = (n: number) => Math.round(n * 10) / 10;
 const finite = (f: HealthFactor): f is HealthFactor & { value: number } =>
   f.status === "AVAILABLE" && typeof f.value === "number" && Number.isFinite(f.value);
@@ -116,6 +128,7 @@ function verdictFor(
 export function buildPanel(input: {
   factors: HealthFactor[];
   extraFactors?: HealthFactor[];
+  riskFlags?: { name: string; level: string }[] | null;
   caps: HealthCap[];
   coverage: number;
   missingCritical: boolean;
@@ -144,6 +157,17 @@ export function buildPanel(input: {
 
   const reasons: PanelReason[] = [];
   if (caps.length > 0) reasons.push({ tone: "bad", text: caps[0].reason });
+
+  const otherFlags = (input.riskFlags ?? []).filter(
+    (r) => !COVERED_FLAGS.has(r.name) && (r.level === "danger" || r.level === "warn"),
+  );
+  if (otherFlags.length > 0) {
+    const names = otherFlags
+      .slice(0, 3)
+      .map((r) => `${r.name} (${r.level === "danger" ? "danger" : "warning"})`)
+      .join(", ");
+    reasons.push({ tone: "bad", text: `RugCheck also flags: ${names}.` });
+  }
 
   const seen = factors.filter(finite);
   for (const f of [...seen].filter((x) => x.value < 4).sort((a, b) => a.value - b.value).slice(0, 3)) {

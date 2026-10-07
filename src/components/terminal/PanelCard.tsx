@@ -63,6 +63,7 @@ export function PanelCard({ d }: { d: Data }) {
     factors: d.factors,
     extraFactors: trend ? [holderTrendFactor(trend)] : [],
     caps: d.health.caps ?? [],
+    riskFlags: d.identity.riskFlags ?? [],
     coverage: d.health.coverage,
     missingCritical: d.health.missingCritical,
   });

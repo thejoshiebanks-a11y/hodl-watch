@@ -107,6 +107,13 @@ export function computeCaps(
   if (identity.freezeAuthority === "SET") {
     cap("freeze_authority", 5, "Freeze authority is still set, so wallets can be frozen.");
   }
+  if (identity.riskFlags?.some((r) => r.name === "Permanent Control Enabled")) {
+    cap(
+      "permanent_control",
+      3,
+      "RugCheck flags permanent control over this token as a danger: a party keeps ongoing control over its accounts.",
+    );
+  }
   const fee = identity.transferFeePct;
   if (isNum(fee) && fee > 5) cap("transfer_fee_high", 3, `Transfer fee is ${fee}%.`);
   else if (isNum(fee) && fee > 0) cap("transfer_fee", 5.5, `Transfer fee is ${fee}%.`);
