@@ -17,14 +17,16 @@ describe("tape factors", () => {
     expect(scoreTape5m(-50)?.score).toBeLessThan(10);
   });
 
-  it("treats equal positive and negative movement symmetrically", () => {
-    expect(scoreTape5m(10)?.score).toBe(scoreTape5m(-10)?.score);
-    expect(scoreTape1h(25)?.score).toBe(scoreTape1h(-25)?.score);
+  it("treats a pump more gently than an equal fall", () => {
+    expect(scoreTape5m(10)!.score).toBe(10);
+    expect(scoreTape5m(-10)!.score).toBe(6.07);
+    expect(scoreTape1h(20)!.score).toBe(10);
+    expect(scoreTape1h(-20)!.score).toBeCloseTo(6.7, 1);
   });
 
-  it("penalizes extreme movement", () => {
-    expect(scoreTape5m(100)?.score).toBeLessThan(1);
-    expect(scoreTape5m(-100)?.score).toBeLessThan(1);
+  it("penalizes extreme falls hard and extreme pumps only mildly", () => {
+    expect(scoreTape5m(-100)!.score).toBeLessThan(1);
+    expect(scoreTape5m(100)!.score).toBeGreaterThanOrEqual(5);
   });
 
   it("keeps scores bounded from 0 to 10", () => {

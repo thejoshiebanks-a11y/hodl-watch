@@ -160,8 +160,8 @@ export function computeCaps(
   const seen = Date.parse(market.observedAt);
   if (Number.isFinite(born) && Number.isFinite(seen)) {
     const hours = (seen - born) / 3_600_000;
-    if (hours < 1) cap("pool_new", 5, "The pool is under 1 hour old.");
-    else if (hours < 24) cap("pool_young", 6.5, "The pool is under 24 hours old.");
+    if (hours < 1) cap("pool_new", 6, "The pool is under 1 hour old.");
+    else if (hours < 24) cap("pool_young", 7, "The pool is under 24 hours old.");
   }
 
   // Sell-led flow with enough trades to mean something

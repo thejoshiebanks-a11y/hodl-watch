@@ -21,7 +21,12 @@ export function scoreStability(
 ): NormalizedFactor | null {
   if (!fin(changePct)) return null;
   const scale = horizon === "6h" ? 80 : 150;
-  const s = 10 * Math.exp(-Math.abs(changePct) / scale);
+  let s = 10 * Math.exp(-Math.abs(changePct) / scale);
+  if (changePct > 0) {
+    const free = horizon === "6h" ? 100 : 200;
+    const span = horizon === "6h" ? 400 : 800;
+    s = 10 - 5 * Math.min(1, Math.max(0, changePct - free) / span);
+  }
   return out(
     s,
     `${horizon} price change is ${changePct.toFixed(2)}%, giving a ${s.toFixed(2)} stability contribution.`,
@@ -160,7 +165,7 @@ export function scoreAge(
   const now = Date.parse(nowIso);
   if (!Number.isFinite(t) || !Number.isFinite(now) || t > now) return null;
   const h = (now - t) / 36e5;
-  const s = h < 1 ? 1 : h < 6 ? 3 : h < 24 ? 5 : h < 72 ? 7 : h < 168 ? 8.5 : 10;
+  const s = h < 1 ? 4 : h < 6 ? 5 : h < 24 ? 6 : h < 72 ? 7 : h < 168 ? 8.5 : 10;
   const age = h >= 48 ? `${(h / 24).toFixed(1)} days` : `${h.toFixed(1)} hours`;
   return out(s, `${label} is ${age} old.`);
 }

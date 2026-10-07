@@ -16,7 +16,13 @@ function normalizePriceChange(
   // Tape measures stability, not momentum.
   // Movement in either direction reduces the stability contribution.
   const absoluteMove = Math.abs(changePct);
-  const stability = 10 * Math.exp(-absoluteMove / stabilityScale);
+  let stability = 10 * Math.exp(-absoluteMove / stabilityScale);
+  if (changePct > 0) {
+    // Up-moves are normal for memecoins: free band, then a slow fade to 5.
+    const free = horizon === "5m" ? 25 : 50;
+    const span = horizon === "5m" ? 125 : 250;
+    stability = 10 - 5 * Math.min(1, Math.max(0, changePct - free) / span);
+  }
   const score = clamp(stability, 0, 10);
 
   const direction =
