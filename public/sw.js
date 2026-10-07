@@ -15,7 +15,7 @@ self.addEventListener("push", (event) => {
     self.registration.showNotification(title, {
       body: data.body || "",
       icon: "/pwa-icon?s=192",
-      badge: "/pwa-icon?s=192",
+      badge: "/pwa-icon?s=96&b=1",
       tag: data.tag || undefined,
       data: { url: data.url || "/" },
     }),
