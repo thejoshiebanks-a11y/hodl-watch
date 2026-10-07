@@ -338,40 +338,68 @@ export function Landing({
           <section className="relative min-h-[150px]">
             <div
               aria-hidden
-              className="pointer-events-none absolute inset-x-0 -bottom-2 h-20 bg-[radial-gradient(55%_100%_at_78%_100%,rgba(31,139,255,0.28),transparent_70%)]"
+              className="pointer-events-none absolute -inset-x-4 -bottom-6 h-32 bg-[radial-gradient(28%_60%_at_78%_50%,rgba(31,139,255,0.3),transparent_70%)]"
             />
+            <svg
+              aria-hidden
+              viewBox="0 0 400 60"
+              preserveAspectRatio="none"
+              className="pointer-events-none absolute -left-4 -bottom-2 z-0 h-14 w-[calc(100%+2rem)]"
+            >
+              <defs>
+                <linearGradient id="rb-fill" x1="0" y1="0" x2="0" y2="1">
+                  <stop stopColor="#1a2b42" /><stop offset=".5" stopColor="#0a111b" /><stop offset="1" stopColor="#03050a" stopOpacity="0" />
+                </linearGradient>
+                <linearGradient id="rb-line" x1="0" y1="0" x2="1" y2="0">
+                  <stop stopColor="#38d6ff" stopOpacity="0" />
+                  <stop offset=".35" stopColor="#38d6ff" stopOpacity=".12" />
+                  <stop offset=".7" stopColor="#38d6ff" stopOpacity=".38" />
+                  <stop offset="1" stopColor="#38d6ff" stopOpacity=".38" />
+                </linearGradient>
+                <linearGradient id="rb-mask-g" x1="0" y1="0" x2="1" y2="0">
+                  <stop stopColor="#fff" stopOpacity="0" />
+                  <stop offset=".4" stopColor="#fff" stopOpacity=".35" />
+                  <stop offset=".72" stopColor="#fff" stopOpacity="1" />
+                </linearGradient>
+                <mask id="rb-mask">
+                  <rect width="400" height="60" fill="url(#rb-mask-g)" />
+                </mask>
+              </defs>
+              <path d="M0 40L60 39L110 37L170 34L220 33L255 28L280 31L305 25L330 29L360 21L385 27L400 25V60H0Z" fill="url(#rb-fill)" mask="url(#rb-mask)" />
+              <path d="M0 40L60 39L110 37L170 34L220 33L255 28L280 31L305 25L330 29L360 21L385 27L400 25" fill="none" stroke="url(#rb-line)" strokeWidth="1" strokeLinejoin="round" vectorEffect="non-scaling-stroke" />
+              
+            </svg>
             <div className="pointer-events-none absolute -top-3 right-0 z-0 w-[150px]">
               <HeroGlobe />
             </div>
             <svg
               aria-hidden
-              viewBox="0 0 400 50"
+              viewBox="0 0 400 60"
               preserveAspectRatio="none"
-              className="pointer-events-none absolute inset-x-0 -bottom-1 z-[1] h-11 w-full"
+              className="pointer-events-none absolute -left-4 -bottom-2 z-[1] h-14 w-[calc(100%+2rem)]"
             >
               <defs>
-                <linearGradient id="rg-fill" x1="0" y1="0" x2="0" y2="1">
-                  <stop stopColor="#223551" />
-                  <stop offset=".5" stopColor="#0a111b" />
-                  <stop offset="1" stopColor="#03050a" stopOpacity="0" />
+                <linearGradient id="rf-fill" x1="0" y1="0" x2="0" y2="1">
+                  <stop stopColor="#1f3047" /><stop offset=".45" stopColor="#0a111b" /><stop offset="1" stopColor="#03050a" stopOpacity="0" />
                 </linearGradient>
-                <linearGradient id="rg-line" x1="0" y1="0" x2="1" y2="0">
+                <linearGradient id="rf-line" x1="0" y1="0" x2="1" y2="0">
                   <stop stopColor="#38d6ff" stopOpacity="0" />
-                  <stop offset=".3" stopColor="#38d6ff" stopOpacity=".18" />
-                  <stop offset=".65" stopColor="#38d6ff" stopOpacity=".6" />
-                  <stop offset="1" stopColor="#38d6ff" stopOpacity=".75" />
+                  <stop offset=".35" stopColor="#38d6ff" stopOpacity=".2" />
+                  <stop offset=".7" stopColor="#38d6ff" stopOpacity=".7" />
+                  <stop offset="1" stopColor="#38d6ff" stopOpacity=".7" />
                 </linearGradient>
-                <linearGradient id="rg-fade" x1="0" y1="0" x2="1" y2="0">
+                <linearGradient id="rf-mask-g" x1="0" y1="0" x2="1" y2="0">
                   <stop stopColor="#fff" stopOpacity="0" />
-                  <stop offset=".35" stopColor="#fff" stopOpacity=".3" />
-                  <stop offset=".7" stopColor="#fff" stopOpacity="1" />
+                  <stop offset=".4" stopColor="#fff" stopOpacity=".35" />
+                  <stop offset=".72" stopColor="#fff" stopOpacity="1" />
                 </linearGradient>
-                <mask id="rg-mask">
-                  <rect width="400" height="50" fill="url(#rg-fade)" />
+                <mask id="rf-mask">
+                  <rect width="400" height="60" fill="url(#rf-mask-g)" />
                 </mask>
               </defs>
-              <path d="M0 42C50 42 95 41 140 39C190 37 225 35 262 29C292 24 318 22 345 24C370 26 388 29 400 31V50H0Z" fill="url(#rg-fill)" mask="url(#rg-mask)" />
-              <path d="M0 42C50 42 95 41 140 39C190 37 225 35 262 29C292 24 318 22 345 24C370 26 388 29 400 31" fill="none" stroke="url(#rg-line)" strokeWidth="1" vectorEffect="non-scaling-stroke" />
+              <path d="M0 44L40 43L80 42L120 40L160 39L195 36L225 37L250 32L268 35L285 30L300 33L318 31L335 34L352 27L370 32L385 29L400 33V60H0Z" fill="url(#rf-fill)" mask="url(#rf-mask)" />
+              <path d="M0 44L40 43L80 42L120 40L160 39L195 36L225 37L250 32L268 35L285 30L300 33L318 31L335 34L352 27L370 32L385 29L400 33" fill="none" stroke="url(#rf-line)" strokeWidth="1" strokeLinejoin="round" vectorEffect="non-scaling-stroke" />
+              <path d="M285 30L291 52M352 27L346 54M250 32L244 54M318 31L322 52M385 29L380 50" stroke="#38d6ff" strokeOpacity=".14" strokeWidth=".7" vectorEffect="non-scaling-stroke" />
             </svg>
             <div className="relative z-10">
               <p className="text-[11px] font-bold uppercase tracking-[0.3em] text-hodl-muted">Token Surveillance</p>
