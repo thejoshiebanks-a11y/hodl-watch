@@ -27,10 +27,34 @@ export function computeCaps(
   const d24 = p.h24.priceChangePct;
   const d6 = p.h6.priceChangePct;
   const d1 = p.h1.priceChangePct;
+  // A deep fall is judged by what is left standing: deep liquidity, a wide
+  // holder base and no liquidity drain. Provisional until calibrated.
+  const liqNow = market.liquidityUsd;
+  const mcNow = market.marketCapUsd;
+  const peakLiq = peak?.liquidityUsd;
+  const drained =
+    isNum(peakLiq) && peakLiq > 0 && isNum(liqNow) && liqNow / peakLiq < 0.7;
+  const structureHeld =
+    isNum(liqNow) &&
+    liqNow >= 100_000 &&
+    isNum(mcNow) &&
+    mcNow > 0 &&
+    liqNow / mcNow >= 0.05 &&
+    isNum(identity.holderCount) &&
+    identity.holderCount >= 5_000 &&
+    !drained;
   if (isNum(d24) && d24 <= -70) {
     cap("crash_24h", 2, `Price is down ${Math.abs(d24).toFixed(0)}% in 24h.`);
   } else if (isNum(d24) && d24 <= -50) {
-    cap("fall_24h", 3.5, `Price is down ${Math.abs(d24).toFixed(0)}% in 24h.`);
+    if (structureHeld) {
+      cap(
+        "fall_24h_held",
+        5,
+        `Price is down ${Math.abs(d24).toFixed(0)}% in 24h, but liquidity and the holder base are intact.`,
+      );
+    } else {
+      cap("fall_24h", 3.5, `Price is down ${Math.abs(d24).toFixed(0)}% in 24h.`);
+    }
   }
   if (isNum(d6) && d6 <= -50) {
     cap("crash_6h", 3, `Price is down ${Math.abs(d6).toFixed(0)}% in 6h.`);
@@ -60,8 +84,20 @@ export function computeCaps(
   // Thin liquidity
   const liq = market.liquidityUsd;
   if (isNum(liq)) {
-    if (liq < 5_000) cap("liquidity_tiny", 3, `Liquidity is only ${usd(liq)}.`);
+    if (liq <= 0) {
+      cap("liquidity_zero", 1.5, "The pool reports no liquidity, so nothing can be sold into it.");
+    } else if (liq < 5_000) cap("liquidity_tiny", 3, `Liquidity is only ${usd(liq)}.`);
     else if (liq < 20_000) cap("liquidity_thin", 5.5, `Liquidity is only ${usd(liq)}.`);
+  } else if (
+    market.pairAddress &&
+    isNum(p.h24.volumeUsd) &&
+    p.h24.volumeUsd > 0
+  ) {
+    cap(
+      "liquidity_unknown",
+      3,
+      "Liquidity could not be read while the token still trades. A drained pool looks like this, and exit liquidity cannot be verified.",
+    );
   }
 
   // Contract controls
