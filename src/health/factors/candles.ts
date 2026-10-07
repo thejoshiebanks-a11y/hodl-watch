@@ -4,6 +4,15 @@ import type { NormalizedFactor } from "./tape";
 // Provisional thresholds for Health v0.1.2.
 const WINDOW_SECONDS = 24 * 3600;
 const MIN_CANDLES = 12;
+// Young tokens only have 5m candles. Eight of them (40 minutes) is enough to
+// read a drawdown. Provisional.
+const MIN_CANDLES_SHORT = 8;
+
+function minCandles(candles: Candle[]): number {
+  if (candles.length < 2) return MIN_CANDLES;
+  const gap = candles[1].time - candles[0].time;
+  return gap > 0 && gap <= 300 ? MIN_CANDLES_SHORT : MIN_CANDLES;
+}
 
 const clamp = (v: number, min: number, max: number) =>
   Math.min(Math.max(v, min), max);
@@ -17,7 +26,7 @@ function windowed(candles: Candle[] | null): Candle[] | null {
   if (!candles || candles.length === 0) return null;
   const last = candles[candles.length - 1].time;
   const w = candles.filter((c) => c.time >= last - WINDOW_SECONDS);
-  return w.length >= MIN_CANDLES ? w : null;
+  return w.length >= minCandles(candles) ? w : null;
 }
 
 export function scoreDrawdown(candles: Candle[] | null): NormalizedFactor | null {
@@ -45,7 +54,7 @@ export function scoreVolatility(
     const b = w[i].close;
     if (a > 0 && b > 0) rets.push(Math.log(b / a));
   }
-  if (rets.length < MIN_CANDLES - 1) return null;
+  if (rets.length < minCandles(w) - 1) return null;
   const mean = rets.reduce((s, r) => s + r, 0) / rets.length;
   const variance =
     rets.reduce((s, r) => s + (r - mean) ** 2, 0) / rets.length;

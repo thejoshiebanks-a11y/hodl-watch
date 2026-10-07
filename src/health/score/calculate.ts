@@ -54,7 +54,9 @@ export function calculateHealth(
       uncappedScore: base.score,
       caps,
       explanation: binding
-        ? `Capped at ${caps[0].max.toFixed(1)}: ${caps[0].reason} ${base.explanation}`
+        ? caps[0].key === "pool_new" || caps[0].key === "pool_young"
+          ? `Early-token ceiling of ${caps[0].max.toFixed(1)}: ${caps[0].reason} The underlying score is ${base.score.toFixed(1)}, and the ceiling lifts as the pool ages. ${base.explanation}`
+          : `Capped at ${caps[0].max.toFixed(1)}: ${caps[0].reason} ${base.explanation}`
         : base.explanation,
     },
     factors,

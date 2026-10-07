@@ -16,9 +16,20 @@ const choppy = (n: number, step: number): Candle[] =>
   });
 
 describe("volatility with different candle sizes", () => {
-  it("needs 12 candles whatever their size", () => {
-    expect(scoreVolatility(choppy(8, 300), 5)).toBeNull();
-    expect(scoreVolatility(choppy(14, 300), 5)).not.toBeNull();
+  it("needs 8 candles at 5m and 12 at 15m", () => {
+    const mk = (n: number, gap: number) =>
+      Array.from({ length: n }, (_, i) => ({
+        time: 1_000_000 + i * gap,
+        open: 100,
+        high: 100,
+        low: 100,
+        close: 100,
+        volume: 1,
+      })) as never;
+    expect(scoreVolatility(mk(7, 300), 5)).toBeNull();
+    expect(scoreVolatility(mk(8, 300), 5)).not.toBeNull();
+    expect(scoreVolatility(mk(11, 900), 15)).toBeNull();
+    expect(scoreVolatility(mk(12, 900), 15)).not.toBeNull();
   });
 
   it("treats the same moves on 5m candles as more volatile than on 15m candles", () => {
