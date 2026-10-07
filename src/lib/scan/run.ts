@@ -44,9 +44,16 @@ export async function runScan(mint: string): Promise<ScanOutcome> {
 
   const market = withCurveLiquidity(dexMarket, identity);
 
+  // Young pools have too few 15-minute candles for the candle checks, so
+  // they use 5-minute candles instead.
+  const bornMs = market.pairCreatedAt ? Date.parse(market.pairCreatedAt) : NaN;
+  const seenParsed = Date.parse(market.observedAt);
+  const seenMs = Number.isFinite(seenParsed) ? seenParsed : Date.now();
+  const young = Number.isFinite(bornMs) && seenMs - bornMs < 6 * 3600_000;
+  const candleMinutes = young ? 5 : 15;
   let candles: Candle[] | null = null;
   if (market.pairAddress && POOL_PATTERN.test(market.pairAddress)) {
-    const c = await getCandles(market.pairAddress, "15m", {
+    const c = await getCandles(market.pairAddress, young ? "5m" : "15m", {
       limit: 100,
       timeoutMs: 4000,
       freshMs: 30_000,
@@ -55,7 +62,7 @@ export async function runScan(mint: string): Promise<ScanOutcome> {
   }
 
   const peak = await getPeak(mint);
-  const health = calculateHealth(market, identity, candles, peak);
+  const health = calculateHealth(market, identity, candles, peak, candleMinutes);
 
   return {
     ok: true,

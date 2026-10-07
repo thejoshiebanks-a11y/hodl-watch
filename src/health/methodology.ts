@@ -24,7 +24,7 @@ export const CHECKS: CheckInfo[] = [
   { key: "market_6h", domain: "MARKET", label: "6h price stability", measures: "How far price moved in the last 6 hours.", scoring: "10 when flat; about 3.7 at an 80% move." },
   { key: "market_24h", domain: "MARKET", label: "24h price stability", measures: "How far price moved in the last 24 hours.", scoring: "10 when flat; about 3.7 at a 150% move." },
   { key: "market_drawdown", domain: "MARKET", label: "Drawdown from 24h high", measures: "How far price sits below its highest point of the last 24 hours (from 15-minute candles).", scoring: "10 at the high; about 3.7 when 40% below it." },
-  { key: "market_volatility", domain: "MARKET", label: "Volatility (15m candles)", measures: "The typical size of 15-minute candle-to-candle moves over 24 hours.", scoring: "10 when steady; about 3.7 at a 4% typical move." },
+  { key: "market_volatility", domain: "MARKET", label: "Volatility (15m candles)", measures: "The typical candle-to-candle move over 24 hours, scaled to a 15-minute equivalent. Pools under 6 hours old use 5-minute candles.", scoring: "10 when steady; about 3.7 at a 4% typical move." },
   { key: "market_recovery", domain: "MARKET", label: "Recovery from 24h low", measures: "After the largest drop of the last 24 hours, how much of it price has won back.", scoring: "9 when there was no drop of 10% or more. Otherwise 3 (no recovery) up to 10 (fully recovered)." },
 
   { key: "liquidity_usd", domain: "LIQUIDITY", label: "Absolute liquidity", measures: "Dollar value of liquidity in the pool.", scoring: "Log scale: 0 at $1,000, 10 at $10 million." },

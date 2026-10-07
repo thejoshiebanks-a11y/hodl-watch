@@ -63,6 +63,7 @@ export function assembleHealthFactors(
   market: TokenMarketSnapshot,
   identity: TokenIdentitySnapshot,
   candles?: Candle[] | null,
+  candleMinutes = 15,
 ): HealthFactor[] {
   const f: HealthFactor[] = [];
   const p = market.periods;
@@ -76,7 +77,7 @@ export function assembleHealthFactors(
   // MARKET (from candles). Skipped entirely when the caller passes no candle argument.
   if (candles !== undefined) {
     add(f, "market_drawdown", "Drawdown from 24h high", "MARKET", scoreDrawdown(candles), "Candle data is unavailable.");
-    add(f, "market_volatility", "Volatility (15m candles)", "MARKET", scoreVolatility(candles), "Candle data is unavailable.");
+    add(f, "market_volatility", "Volatility (15m candles)", "MARKET", scoreVolatility(candles, candleMinutes), "Candle data is unavailable.");
     add(f, "market_recovery", "Recovery from 24h low", "MARKET", scoreRecovery(candles), "Candle data is unavailable.");
   }
 

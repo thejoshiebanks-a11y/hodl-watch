@@ -12,11 +12,12 @@ export function calculateHealth(
   identity: TokenIdentitySnapshot,
   candles?: Candle[] | null,
   peak?: PeakInfo | null,
+  candleMinutes = 15,
 ): {
   score: HealthScore;
   factors: ReturnType<typeof assembleHealthFactors>;
 } {
-  const factors = assembleHealthFactors(market, identity, candles);
+  const factors = assembleHealthFactors(market, identity, candles, candleMinutes);
   const base = aggregateHealth(factors);
 
   const caps = applyCurveRules(

@@ -33,7 +33,10 @@ export function scoreDrawdown(candles: Candle[] | null): NormalizedFactor | null
   );
 }
 
-export function scoreVolatility(candles: Candle[] | null): NormalizedFactor | null {
+export function scoreVolatility(
+  candles: Candle[] | null,
+  intervalMinutes = 15,
+): NormalizedFactor | null {
   const w = windowed(candles);
   if (!w) return null;
   const rets: number[] = [];
@@ -46,10 +49,13 @@ export function scoreVolatility(candles: Candle[] | null): NormalizedFactor | nu
   const mean = rets.reduce((s, r) => s + r, 0) / rets.length;
   const variance =
     rets.reduce((s, r) => s + (r - mean) ** 2, 0) / rets.length;
-  const sigma = Math.sqrt(variance) * 100;
+  // Moves grow with the square root of time, so scale to a 15-minute
+  // equivalent. That keeps scores comparable across candle sizes.
+  const step = intervalMinutes > 0 ? intervalMinutes : 15;
+  const sigma = Math.sqrt(variance) * 100 * Math.sqrt(15 / step);
   return out(
     10 * Math.exp(-sigma / 4),
-    `Typical 15m candle-to-candle move is about ${sigma.toFixed(2)}% over the last 24h.`,
+    `Typical move per 15 minutes is about ${sigma.toFixed(2)}%${step === 15 ? "" : ` (scaled from ${step}m candles)`} over the last 24h.`,
   );
 }
 
