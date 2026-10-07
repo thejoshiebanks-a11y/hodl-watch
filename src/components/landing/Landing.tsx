@@ -331,10 +331,14 @@ export function Landing({
         <span className="bg-gradient-to-r from-white to-hodl-cyan bg-clip-text text-xl font-extrabold tracking-[0.2em] text-transparent">
           HODL
         </span>
+        <span className="ml-auto inline-flex items-center gap-2 rounded-full border border-hodl-line bg-black/40 px-3 py-1.5 text-[10px] font-extrabold uppercase tracking-[0.16em] text-emerald-300">
+          <span className="h-2 w-2 animate-pulse rounded-full bg-emerald-400 shadow-[0_0_10px_#34d399]" />
+          Solana · Live
+        </span>
       </header>
 
       {view === "home" && (
-        <div className="pointer-events-none absolute -top-5 right-0 z-0 w-[150px]">
+        <div className="pointer-events-none absolute right-0 top-12 z-0 w-[150px]">
           <HeroGlobe />
         </div>
       )}
@@ -342,19 +346,16 @@ export function Landing({
       {view === "home" && (
         <div className="relative z-10 mt-8 space-y-5">
           <section>
-            <span className="inline-flex items-center gap-2 rounded-full border border-emerald-400/50 bg-emerald-400/10 px-3.5 py-1.5 text-[11px] font-extrabold uppercase tracking-[0.14em] text-emerald-300">
-              <span className="h-2 w-2 animate-pulse rounded-full bg-emerald-400 shadow-[0_0_10px_#34d399]" />
-              Live · Solana
-            </span>
-            <h1 className="mt-4 text-[clamp(28px,8.6vw,34px)] font-black leading-[1.03] tracking-tight">
-              Real Time
+            <p className="text-[11px] font-bold uppercase tracking-[0.3em] text-hodl-muted">Token Surveillance</p>
+            <h1 className="mt-3 text-[clamp(30px,9vw,38px)] font-black leading-[1.03] tracking-tight">
+              Smarter Scans.
               <br />
-              <span className="bg-gradient-to-r from-cyan-300 via-blue-400 to-violet-400 bg-clip-text text-transparent">
-                Token Intelligence
+              <span className="bg-gradient-to-r from-hodl-cyan via-hodl-blue to-violet-400 bg-clip-text text-transparent">
+                Better Plays.
               </span>
             </h1>
-            <p className="mt-3 max-w-[310px] text-[15px] leading-snug text-slate-300/85">
-              Scan any Solana token and get an explainable Health score, a live chart and the evidence behind it.
+            <p className="mt-3 max-w-[300px] text-[15px] leading-snug text-slate-300/85">
+              Paste a token CA and get an explainable Health score, live data and alerts in one place.
             </p>
           </section>
 
@@ -367,9 +368,9 @@ export function Landing({
                 e.preventDefault();
                 onScan(mint);
               }}
-              className="rounded-[20px] bg-gradient-to-r from-hodl-blue via-hodl-cyan to-violet-500 p-[1.5px] shadow-[0_0_34px_rgba(47,91,255,0.5)]"
+              className="rounded-[20px] bg-gradient-to-r from-hodl-blue via-hodl-cyan to-hodl-green p-[1.5px] shadow-[0_0_30px_rgba(31,139,255,0.35)]"
             >
-              <div className="flex items-center gap-2 rounded-[19px] bg-[#050a26] p-2">
+              <div className="flex items-center gap-2 rounded-[19px] bg-[#05080e] p-2">
                 <Icon name="link" className="ml-2 h-5 w-5 shrink-0 text-hodl-cyan" />
                 <input
                   suppressHydrationWarning
@@ -392,7 +393,7 @@ export function Landing({
                 <button
                   type="submit"
                   disabled={loading}
-                  className="flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-hodl-blue to-blue-500 px-5 py-3.5 text-[15px] font-extrabold shadow-lg shadow-blue-900/50 disabled:opacity-60"
+                  className="flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-hodl-blue to-blue-500 px-5 py-3.5 text-[15px] font-extrabold shadow-lg shadow-black/60 disabled:opacity-60"
                 >
                   <Icon name="bolt" className="h-4 w-4" />
                   {loading ? "Scanning…" : "Scan"}
@@ -400,57 +401,31 @@ export function Landing({
               </div>
             </form>
             <p className="mt-2 px-1 text-[11px] text-slate-400">Solana only · no wallet connection needed</p>
+            <div className="mt-3 grid grid-cols-4 divide-x divide-white/10 rounded-2xl border border-hodl-line bg-black/30 py-3 text-center text-[11px] text-slate-300">
+              {([["Price & Chart", "chart"], ["Risk Analysis", "shield"], ["Identity Check", "people"], ["Live Alerts", "bell"]] as [string, Parameters<typeof Icon>[0]["name"]][]).map(([label, ic]) => (
+                <span key={label} className="flex flex-col items-center gap-1.5">
+                  <Icon name={ic} className="h-5 w-5 text-hodl-cyan" />
+                  {label}
+                </span>
+              ))}
+            </div>
           </div>
 
           {error && <p className="text-sm text-rose-300">{error}</p>}
 
-          <div className="flex items-center gap-2 overflow-x-auto pb-1">
-            <span className="shrink-0 text-xs text-hodl-muted">Try</span>
-            {chips.map((c) => (
-              <button
-                key={c.mint}
-                type="button"
-                onClick={() => {
-                  setMint(c.mint);
-                  onScan(c.mint);
-                }}
-                className="shrink-0 whitespace-nowrap rounded-full border border-hodl-line bg-hodl-panel/70 px-4 py-2.5 text-[13px] font-extrabold tracking-wide text-white"
-              >
-                {c.label}
-              </button>
-            ))}
-          </div>
-
           {featured && <Featured d={featured} onScan={onScan} />}
 
-          <section>
-            <div className="mb-2 flex items-center justify-between px-1">
-              <p className="flex items-center gap-2 text-xl font-extrabold">
-                <Icon name="fire" className="h-5 w-5 text-orange-400" /> Trending Now
-              </p>
-              {trend && (
-                <button type="button" onClick={() => setView("trending")} className="text-xs text-hodl-cyan">
-                  View all →
-                </button>
-              )}
-            </div>
-            {trend ? (
-              trendList(trend.slice(0, 5))
-            ) : (
-              <p className="hodl-card px-4 py-6 text-center text-xs text-hodl-muted">
-                {trendFailed ? "Trending is unavailable right now." : "Loading trending tokens…"}
-              </p>
-            )}
-          </section>
-
           <section className="hodl-card flex items-center gap-3 p-4">
-            <span className="flex h-10 w-10 items-center justify-center rounded-full bg-hodl-blue/25 text-hodl-cyan">
-              <Icon name="bolt" className="h-5 w-5" />
+            <span className="flex h-11 w-11 items-center justify-center rounded-xl border border-hodl-line bg-black/40 text-hodl-cyan">
+              <Icon name="scan" className="h-5 w-5" />
             </span>
-            <div>
-              <p className="whitespace-nowrap bg-gradient-to-r from-white to-hodl-cyan bg-clip-text text-[11px] font-extrabold uppercase tracking-[0.14em] text-transparent">Health · Observe · Detect · Live</p>
-              
+            <div className="min-w-0 flex-1">
+              <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-hodl-muted">Why HODL?</p>
+              <p className="text-[17px] font-extrabold">You trade. HODL watches.</p>
             </div>
+            <button type="button" onClick={() => setView("more")} className="rounded-full border border-hodl-cyan/60 px-4 py-2 text-xs font-bold text-hodl-cyan">
+              Learn more →
+            </button>
           </section>
         </div>
       )}
@@ -487,7 +462,7 @@ export function Landing({
       <Footer />
 
       <nav
-        className="fixed inset-x-0 bottom-0 z-10 border-t border-hodl-line bg-[#050b24]/95 backdrop-blur"
+        className="fixed inset-x-0 bottom-0 z-10 border-t border-hodl-line bg-[#05080e]/95 backdrop-blur"
         style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
       >
         <div className="mx-auto grid max-w-7xl grid-cols-5">

@@ -3,20 +3,18 @@ export function HodlLogo({ size = 38 }: { size?: number }) {
     <svg width={size} height={size} viewBox="0 0 48 48" fill="none" aria-label="HODL">
       <defs>
         <linearGradient id="hodl-g" x1="6" y1="4" x2="42" y2="44" gradientUnits="userSpaceOnUse">
-          <stop stopColor="#38d6ff" />
-          <stop offset="1" stopColor="#2f5bff" />
+          <stop stopColor="#7ff3ff" />
+          <stop offset="1" stopColor="#1f8bff" />
+        </linearGradient>
+        <linearGradient id="hodl-f" x1="24" y1="2" x2="24" y2="46" gradientUnits="userSpaceOnUse">
+          <stop stopColor="#19232f" />
+          <stop offset="1" stopColor="#04070b" />
         </linearGradient>
       </defs>
-      <path d="M24 2.5 42.5 13v22L24 45.5 5.5 35V13z" fill="url(#hodl-g)" />
-      <path d="M24 2.5 42.5 13v22L24 45.5 5.5 35V13z" stroke="#fff" strokeOpacity=".35" />
-      <path d="M17 14v20M31 14v20" stroke="#fff" strokeWidth="3.6" strokeLinecap="round" />
-      <path
-        d="M17 25h4.5l2.5-6 3 11 2-5H31"
-        stroke="#fff"
-        strokeWidth="3"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
+      <path d="M24 2.5 42.5 13v22L24 45.5 5.5 35V13z" fill="url(#hodl-f)" />
+      <path d="M24 2.5 42.5 13v22L24 45.5 5.5 35V13z" stroke="url(#hodl-g)" strokeWidth="1.6" />
+      <path d="M17 14v20M31 14v20" stroke="url(#hodl-g)" strokeWidth="3.6" strokeLinecap="round" />
+      <path d="M17 25h4.5l2.5-6 3 11 2-5H31" stroke="url(#hodl-g)" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
 }
