@@ -1,10 +1,5 @@
 import type { CSSProperties } from "react";
 
-// Tune the photo hands here (percent of the hero box).
-const HAND_WIDTH = 84;
-const HAND_BOTTOM = -6;
-const WRIST_X = 38.8; // wrist centre as % of the photo width
-
 const CX = 100;
 const CY = 74;
 const R = 50;
@@ -24,19 +19,31 @@ const SPARKS: [number, number, number][] = [
   [24, 34, 0], [178, 28, 0.8], [172, 130, 1.6], [26, 112, 2.1], [150, 6, 1.2],
 ];
 
-// Timeline (seconds): fist 0-1 -> hand opens 1.1-4.9 -> globe rises 2.0-4.8 -> flash 4.2
+// Robot hand: every joint rotates from a closed pose (c) to an open pose (o), in degrees.
+type Joint = { o: number; c: number };
+type FingerCfg = { x: number; y: number; w: number; len: [number, number, number]; j: [Joint, Joint, Joint] };
+
+const FINGERS: FingerCfg[] = [
+  { x: 77, y: 155, w: 11, len: [21, 18, 14], j: [{ o: -34, c: 8 }, { o: 10, c: 34 }, { o: 14, c: 42 }] },
+  { x: 92, y: 152, w: 12, len: [25, 21, 15], j: [{ o: -12, c: 3 }, { o: 10, c: 34 }, { o: 14, c: 42 }] },
+  { x: 107, y: 152, w: 12, len: [25, 21, 15], j: [{ o: 12, c: -3 }, { o: -10, c: -34 }, { o: -14, c: -42 }] },
+  { x: 122, y: 155, w: 11, len: [21, 18, 14], j: [{ o: 34, c: -8 }, { o: -10, c: -34 }, { o: -14, c: -42 }] },
+  { x: 69, y: 184, w: 12, len: [14, 13, 11], j: [{ o: -64, c: -16 }, { o: 14, c: 36 }, { o: 16, c: 42 }] },
+];
+
+// Timeline (seconds): hand rises 0-0.9 -> fingers open 1.3-3.9 -> globe rises 2.0-4.8 -> flash 4.2
 const CSS = `
 .hg-leak{transform-box:fill-box;transform-origin:center;opacity:0;animation:hg-leak 3.4s ease-in-out .4s both}
 @keyframes hg-leak{0%{opacity:0;transform:scale(.5)}45%{opacity:1;transform:scale(1)}100%{opacity:0;transform:scale(1.9)}}
-.hg-fist{transform-origin:${WRIST_X}% 100%;animation:hg-fist 3.4s cubic-bezier(.4,0,.2,1) 1s both}
-@keyframes hg-fist{0%{opacity:1;scale:1 1}55%{opacity:.8}100%{opacity:0;scale:1.14 1.06}}
-.hg-hand{transform-origin:${WRIST_X}% 100%;animation:hg-hand 3.8s cubic-bezier(.4,0,.2,1) 1.1s both}
-@keyframes hg-hand{0%{opacity:0;scale:.5 .8;rotate:-5deg}35%{opacity:.55}70%{opacity:1}100%{opacity:1;scale:1 1;rotate:0deg}}
+.hg-rhand{animation:hg-hin .9s ease-out both}
+@keyframes hg-hin{0%{opacity:0;transform:translateY(16px)}100%{opacity:1;transform:none}}
+.hg-j{transform-box:view-box;transform-origin:0 0;rotate:var(--o);animation:hg-open 2.6s cubic-bezier(.55,0,.2,1) 1.3s backwards}
+@keyframes hg-open{0%{rotate:var(--c)}100%{rotate:var(--o)}}
 .hg-reveal{transform-box:view-box;transform-origin:100px 74px;animation:hg-reveal 2.8s cubic-bezier(.25,.8,.3,1.08) 2s both}
 @keyframes hg-reveal{0%{transform:translateY(54px) scale(.06);opacity:0}25%{opacity:1}100%{transform:none;opacity:1}}
 .hg-flash{transform-box:fill-box;transform-origin:center;opacity:0;animation:hg-flash 1.3s ease-out 4.2s both}
 @keyframes hg-flash{0%{opacity:0;transform:scale(.2)}35%{opacity:1}100%{opacity:0;transform:scale(2.2)}}
-.hg-wave{transform-box:fill-box;transform-origin:center;opacity:0;animation:hg-wave 1.5s ease-out 4.3s both}
+.hg-wave{transform-box:fill-box;transform-origin:center;opacity:0;animation:hg-wave 1.5s ease-out 4.3s forwards}
 @keyframes hg-wave{0%{opacity:.9;transform:scale(.3)}100%{opacity:0;transform:scale(2.4)}}
 .hg-float{animation:hg-float 5s ease-in-out infinite}
 @keyframes hg-float{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
@@ -48,20 +55,44 @@ const CSS = `
 .hg-tw{animation:hg-tw 2.6s ease-in-out infinite}
 @keyframes hg-tw{0%,100%{opacity:.1}50%{opacity:1}}
 @media (prefers-reduced-motion:reduce){
-.hg-float,.hg-spin,.hg-spin2,.hg-ripple,.hg-tw,.hg-reveal,.hg-hand,.hg-flash,.hg-wave,.hg-leak{animation:none}
-.hg-fist,.hg-leak,.hg-flash,.hg-wave{display:none}}
+.hg-float,.hg-spin,.hg-spin2,.hg-ripple,.hg-tw,.hg-reveal,.hg-flash,.hg-wave,.hg-leak,.hg-rhand,.hg-j{animation:none}
+.hg-leak,.hg-flash,.hg-wave{display:none}}
 `;
 
-const handStyle: CSSProperties = {
-  position: "absolute",
-  left: `${(100 - HAND_WIDTH) / 2}%`,
-  bottom: `${HAND_BOTTOM}%`,
-  width: `${HAND_WIDTH}%`,
-  pointerEvents: "none",
-  WebkitMaskImage: "linear-gradient(to bottom, #000 68%, transparent 100%)",
-  maskImage: "linear-gradient(to bottom, #000 68%, transparent 100%)",
-  filter: "drop-shadow(0 0 8px rgba(56,214,255,0.55)) saturate(1.05) contrast(1.05)",
-};
+function Seg({ len, w, tip }: { len: number; w: number; tip?: boolean }) {
+  return (
+    <g>
+      <rect x={-w / 2} y={-len} width={w} height={len + 2} rx={w / 2.3}
+        fill="url(#hg-metal)" stroke="#7fe3ff" strokeOpacity=".55" strokeWidth=".6" />
+      <rect x={-w / 2 + 1.7} y={-len + 2.5} width="1.5" height={Math.max(len - 6, 2)} rx=".75" fill="#fff" opacity=".3" />
+      {tip && <circle cy={-len + 4} r="1.7" fill="#7fe8ff" className="hg-tw" />}
+      <circle r={w / 2.6} fill="#05080d" stroke="#38d6ff" strokeWidth=".8" />
+      <circle r="1.1" fill="#aaf3ff" />
+    </g>
+  );
+}
+
+function Finger({ f }: { f: FingerCfg }) {
+  const [l1, l2, l3] = f.len;
+  const jv = (k: number) => ({ "--o": `${f.j[k].o}deg`, "--c": `${f.j[k].c}deg` }) as CSSProperties;
+  return (
+    <g transform={`translate(${f.x} ${f.y})`}>
+      <g className="hg-j" style={jv(0)}>
+        <Seg len={l1} w={f.w} />
+        <g transform={`translate(0 ${-l1})`}>
+          <g className="hg-j" style={jv(1)}>
+            <Seg len={l2} w={f.w - 1.5} />
+            <g transform={`translate(0 ${-l2})`}>
+              <g className="hg-j" style={jv(2)}>
+                <Seg len={l3} w={f.w - 3} tip />
+              </g>
+            </g>
+          </g>
+        </g>
+      </g>
+    </g>
+  );
+}
 
 export function HeroGlobe() {
   return (
@@ -70,8 +101,8 @@ export function HeroGlobe() {
       <svg viewBox="0 0 200 220" className="w-full overflow-visible" aria-hidden>
         <defs>
           <radialGradient id="hg-glow">
-            <stop offset="0" stopColor="#4f7bff" stopOpacity=".55" />
-            <stop offset="1" stopColor="#4f7bff" stopOpacity="0" />
+            <stop offset="0" stopColor="#1f8bff" stopOpacity=".55" />
+            <stop offset="1" stopColor="#1f8bff" stopOpacity="0" />
           </radialGradient>
           <radialGradient id="hg-body" cx=".35" cy=".3" r=".9">
             <stop offset="0" stopColor="#4aa8ff" />
@@ -92,6 +123,17 @@ export function HeroGlobe() {
             <stop offset=".4" stopColor="#7fe8ff" stopOpacity=".55" />
             <stop offset="1" stopColor="#38d6ff" stopOpacity="0" />
           </radialGradient>
+          <linearGradient id="hg-metal" x1="0" y1="0" x2="1" y2="0">
+            <stop stopColor="#9fb2cc" />
+            <stop offset=".28" stopColor="#3b485c" />
+            <stop offset=".65" stopColor="#111823" />
+            <stop offset="1" stopColor="#06090e" />
+          </linearGradient>
+          <linearGradient id="hg-palm" x1="0" y1="0" x2="1" y2="1">
+            <stop stopColor="#4a586d" />
+            <stop offset=".45" stopColor="#151c28" />
+            <stop offset="1" stopColor="#05080d" />
+          </linearGradient>
           <clipPath id="hg-clip">
             <circle cx={CX} cy={CY} r={R} />
           </clipPath>
@@ -166,17 +208,27 @@ export function HeroGlobe() {
         <circle className="hg-flash" cx={CX} cy={CY} r="46" fill="url(#hg-flash)" />
         <circle className="hg-wave" cx={CX} cy={CY} r="50" fill="none" stroke="#7fe8ff" strokeWidth="1.5" />
 
-        <ellipse cx={CX} cy="204" rx="50" ry="8" fill="#38d6ff" opacity=".3" filter="url(#hg-blur)" />
+        <ellipse cx={CX} cy="206" rx="50" ry="8" fill="#38d6ff" opacity=".3" filter="url(#hg-blur)" />
+
+        {/* Robot hand: palm, wrist, then five jointed fingers */}
+        <g className="hg-rhand">
+          <path
+            d="M66 152Q66 150 70 150H130Q134 150 134 152L136 188Q136 196 128 199L124 201V214H76V201L72 199Q64 196 64 188Z"
+            fill="url(#hg-palm)" stroke="#7fe3ff" strokeOpacity=".5" strokeWidth=".8"
+          />
+          <path d="M72 160V190M128 160V190M84 196H116" stroke="#38d6ff" strokeOpacity=".28" strokeWidth=".7" fill="none" />
+          <rect x="74" y="201" width="52" height="6" rx="2" fill="#05080d" stroke="#38d6ff" strokeOpacity=".7" strokeWidth=".7" />
+          <polygon points="100,166 110,172 110,184 100,190 90,184 90,172" fill="#05080d" stroke="#38d6ff" strokeWidth="1" />
+          <circle cx="100" cy="178" r="4" fill="#7fe8ff" filter="url(#hg-neon)" className="hg-tw" />
+          {FINGERS.map((f) => (
+            <Finger key={`${f.x}-${f.y}`} f={f} />
+          ))}
+        </g>
 
         {SPARKS.map(([x, y, delay]) => (
           <circle key={`${x}-${y}`} className="hg-tw" style={{ animationDelay: `${delay}s` }} cx={x} cy={y} r="1.8" fill="#aaf3ff" />
         ))}
       </svg>
-
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img className="hg-fist" src="/hand-closed.webp" alt="" style={handStyle} />
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img className="hg-hand" src="/hand.webp" alt="" style={handStyle} />
     </div>
   );
 }
