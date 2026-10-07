@@ -1,12 +1,10 @@
 "use client";
 
-import { raiseRiskLabel } from "@/health/score/risk";
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { WatchlistView } from "./WatchlistView";
 import { Footer } from "@/components/Footer";
 import type { ScanResponse, ScanSuccess } from "@/lib/types/scan";
-import { summarizeHealthGroups } from "@/health/score/groups";
-import { bandColor, riskRows } from "@/components/terminal/TokenView";
+import { bandColor } from "@/components/terminal/TokenView";
 import { HodlLogo, Icon, SolanaMark } from "@/components/terminal/Brand";
 import { HeroGlobe } from "@/components/landing/HeroGlobe";
 
@@ -56,8 +54,8 @@ function Avatar({ url, symbol, size, fallback }: { url: string | null; symbol: s
     flexShrink: 0,
     borderRadius: "9999px",
     overflow: "hidden",
-    border: "2px solid #2f5bff",
-    background: "#0b1642",
+    border: "2px solid #1f8bff",
+    background: "#07101c",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
@@ -82,12 +80,12 @@ function Avatar({ url, symbol, size, fallback }: { url: string | null; symbol: s
   );
 }
 
-function MiniRing({ score }: { score: number | null }) {
+function MiniRing({ score, size = 96 }: { score: number | null; size?: number }) {
   const r = 40;
   const c = 2 * Math.PI * r;
   const col = bandColor(score);
   return (
-    <div className="relative h-24 w-24 shrink-0">
+    <div className="relative shrink-0" style={{ width: size, height: size }}>
       <svg viewBox="0 0 100 100" className="h-full w-full -rotate-90" style={{ filter: `drop-shadow(0 0 6px ${col}99)` }}>
         <circle cx="50" cy="50" r={r} fill="none" stroke="rgba(96,140,255,0.16)" strokeWidth="8" />
         <circle
@@ -96,8 +94,8 @@ function MiniRing({ score }: { score: number | null }) {
         />
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <span className="text-2xl font-bold">{score === null ? "—" : score.toFixed(1)}</span>
-        <span className="text-[8px] tracking-[0.14em] text-hodl-muted">HEALTH</span>
+        <span className="font-bold leading-none" style={{ fontSize: size * 0.28 }}>{score === null ? "—" : score.toFixed(1)}</span>
+        <span className="mt-0.5 tracking-[0.14em] text-hodl-muted" style={{ fontSize: Math.max(size * 0.09, 6) }}>HEALTH</span>
       </div>
     </div>
   );
@@ -132,7 +130,7 @@ function Spark({ pool }: { pool: string | null }) {
   const col = pts[pts.length - 1] >= pts[0] ? "#2dd4bf" : "#fb7185";
 
   return (
-    <svg viewBox="0 0 160 50" className="h-14 w-full" preserveAspectRatio="none">
+    <svg viewBox="0 0 160 50" className="h-10 w-full" preserveAspectRatio="none">
       <defs>
         <linearGradient id="spk" x1="0" y1="0" x2="0" y2="1">
           <stop offset="0" stopColor={col} stopOpacity=".35" />
@@ -145,61 +143,84 @@ function Spark({ pool }: { pool: string | null }) {
   );
 }
 
-function Featured({ d, onScan }: { d: Data; onScan: (m: string) => void }) {
-  const m = d.market;
-  const liq = summarizeHealthGroups(d.factors).find((g) => g.group === "LIQUIDITY")?.score ?? null;
-  const rows = riskRows(d);
-  const baseRisk = rows.some((r) => r[2] === "bad")
-    ? "High"
-    : rows.some((r) => r[2] === "mid")
-      ? "Moderate"
-      : rows.every((r) => r[2] === "na")
-        ? "N/A"
-        : "Low";
-  const risk = raiseRiskLabel(baseRisk, d.health.caps);
-  const lp = d.identity.lpLockedPctWeighted;
-  const observed = d.factors.filter((f) => f.status === "AVAILABLE").length;
-  const partial = d.health.partial || d.health.missingCritical;
+function FeaturedRow({ mint, onScan }: { mint: string; onScan: (m: string) => void }) {
+  const [d, setD] = useState<Data | null>(null);
+  const [failed, setFailed] = useState(false);
 
-  const stats: [string, string, string][] = [
-    ["Liquidity", usd(m.liquidityUsd), liq === null ? "" : liq >= 7 ? "Strong" : liq >= 4 ? "Moderate" : "Thin"],
-    ["Holders", !d.identity.holderCount ? "N/A" : compact.format(d.identity.holderCount), ""],
-    ["LP locked", lp === null ? "N/A" : `${lp.toFixed(0)}%`, "weighted"],
-    ["Risk", risk, `${observed}/${d.factors.length} checks${partial ? " · partial" : ""}`],
-  ];
+  useEffect(() => {
+    let off = false;
+    (async () => {
+      try {
+        const r = await fetch("/api/scan", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ mint }),
+        });
+        const j: ScanResponse = await r.json();
+        if (off) return;
+        if ("data" in j) setD(j.data);
+        else setFailed(true);
+      } catch {
+        if (!off) setFailed(true);
+      }
+    })();
+    return () => {
+      off = true;
+    };
+  }, [mint]);
+
+  if (failed) return null;
+  if (!d) return <div className="h-[92px] animate-pulse rounded-2xl border border-white/5 bg-white/[0.03]" />;
+
+  const m = d.market;
+  const partial = d.health.partial || d.health.missingCritical;
+  const isSol = m.symbol === "SOL";
+  const price = m.priceUsd === null ? "N/A" : m.priceUsd < 1 ? m.priceUsd.toPrecision(4) : m.priceUsd.toFixed(2);
 
   return (
-    <button type="button" onClick={() => onScan(m.mint)} className="hodl-card w-full p-4 text-left">
-      <span className="rounded-full border border-amber-300/30 bg-amber-300/10 px-2.5 py-1 text-[10px] font-semibold text-amber-200">
-        ★ Featured token
-      </span>
-      <div className="mt-3 flex items-center justify-between gap-3">
-        <div className="flex min-w-0 items-center gap-3">
-          <Avatar url={m.imageUrl ?? null} symbol={m.symbol} size={56} fallback={m.symbol === "SOL" ? <SolanaMark className="h-7 w-7" /> : undefined} />
-          <div className="min-w-0">
-            <p className="truncate text-xl font-extrabold">{m.symbol === "SOL" ? "Solana" : (m.name ?? "Token")}</p>
-            <p className="text-xs text-hodl-muted">${m.symbol ?? "—"}</p>
-            <p className="mt-1 text-sm font-semibold">
-              ${m.priceUsd === null ? "N/A" : m.priceUsd < 1 ? m.priceUsd.toPrecision(4) : m.priceUsd.toFixed(2)}
-            </p>
-            <p className="text-xs"><Change v={m.periods.h24.priceChangePct} /> <span className="text-hodl-muted">(24h)</span></p>
-          </div>
+    <button
+      type="button"
+      onClick={() => onScan(m.mint)}
+      className="grid w-full grid-cols-[minmax(0,1.15fr)_auto_minmax(0,1fr)] items-center gap-2.5 rounded-2xl border border-white/5 bg-white/[0.025] px-3 py-3 text-left"
+    >
+      <div className="flex min-w-0 items-center gap-2.5">
+        <Avatar url={m.imageUrl ?? null} symbol={m.symbol} size={40} fallback={isSol ? <SolanaMark className="h-5 w-5" /> : undefined} />
+        <div className="min-w-0">
+          <p className="truncate text-[15px] font-extrabold leading-tight">{isSol ? "Solana" : (m.name ?? "Token")}</p>
+          <p className="text-[10px] text-hodl-muted">${m.symbol ?? "—"}</p>
+          <p className="mt-0.5 truncate text-[12px] font-semibold">${price}</p>
+          <p className="text-[11px]"><Change v={m.periods.h24.priceChangePct} /> <span className="text-hodl-muted">(24h)</span></p>
         </div>
-        <div className={partial ? "opacity-60 grayscale" : ""}><MiniRing score={d.health.score} /></div>
       </div>
-      <div className="mt-3">
+      <div className={partial ? "opacity-60 grayscale" : ""}>
+        <MiniRing score={d.health.score} size={60} />
+      </div>
+      <div className="min-w-0 border-l border-white/10 pl-2.5">
         <Spark pool={m.pairAddress} />
-      </div>
-      <div className="mt-3 grid grid-cols-4 divide-x divide-white/10 rounded-xl border border-white/10 bg-black/20 py-2.5">
-        {stats.map(([k, v, sub]) => (
-          <div key={k} className="px-2.5">
-            <p className="text-[9px] uppercase tracking-[0.08em] text-hodl-muted">{k}</p>
-            <p className="mt-0.5 whitespace-nowrap text-sm font-extrabold">{v}</p>
-            <p className="text-[10px] text-hodl-cyan">{sub || "\u00a0"}</p>
-          </div>
-        ))}
+        <p className="mt-1 whitespace-nowrap text-[10px] text-hodl-muted">MC <span className="ml-1 font-bold text-slate-100">{usd(m.marketCapUsd)}</span></p>
+        <p className="whitespace-nowrap text-[10px] text-hodl-muted">VOL <span className="ml-1 font-bold text-slate-100">{usd(m.periods.h24.volumeUsd)}</span></p>
       </div>
     </button>
+  );
+}
+
+function FeaturedList({ onScan, onViewAll }: { onScan: (m: string) => void; onViewAll: () => void }) {
+  return (
+    <section className="hodl-card p-3">
+      <div className="mb-2.5 flex items-center justify-between px-1">
+        <p className="flex items-center gap-2 text-[11px] font-extrabold uppercase tracking-[0.2em] text-hodl-muted">
+          <Icon name="fire" className="h-4 w-4 text-hodl-cyan" /> Featured tokens
+        </p>
+        <button type="button" onClick={onViewAll} className="text-[11px] font-bold text-hodl-cyan">
+          View all →
+        </button>
+      </div>
+      <div className="space-y-2">
+        {POPULAR.slice(0, 3).map((p) => (
+          <FeaturedRow key={p.mint} mint={p.mint} onScan={onScan} />
+        ))}
+      </div>
+    </section>
   );
 }
 
@@ -240,30 +261,9 @@ export function Landing({
   error: string | null;
 }) {
   const [view, setView] = useState<View>("home");
-  const [featured, setFeatured] = useState<Data | null>(null);
   const [trend, setTrend] = useState<Trend[] | null>(null);
   const [trendFailed, setTrendFailed] = useState(false);
   const inputRef = useRef<HTMLInputElement | null>(null);
-
-  useEffect(() => {
-    let off = false;
-    (async () => {
-      try {
-        const r = await fetch("/api/scan", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ mint: FEATURED }),
-        });
-        const j: ScanResponse = await r.json();
-        if (!off && "data" in j) setFeatured(j.data);
-      } catch {
-        /* featured card simply stays hidden */
-      }
-    })();
-    return () => {
-      off = true;
-    };
-  }, []);
 
   useEffect(() => {
     let off = false;
@@ -282,11 +282,6 @@ export function Landing({
       off = true;
     };
   }, []);
-
-  const chips = [
-    ...POPULAR.map((p) => ({ label: p.symbol, mint: p.mint })),
-    ...(trend?.[0] ? [{ label: `#1 ${trend[0].symbol ?? "trending"}`, mint: trend[0].mint }] : []),
-  ];
 
   function goScan() {
     setView("home");
@@ -339,32 +334,33 @@ export function Landing({
 
 
       {view === "home" && (
-        <div className="relative z-10 mt-8 space-y-5">
-          <section className="relative min-h-[186px]">
-            <div className="pointer-events-none absolute right-0 top-0 z-0 w-[158px]">
+        <div className="relative z-10 mt-6 space-y-4">
+          <section className="relative min-h-[150px]">
+            <div
+              aria-hidden
+              className="pointer-events-none absolute inset-x-0 -bottom-2 h-20 bg-[radial-gradient(55%_100%_at_78%_100%,rgba(31,139,255,0.28),transparent_70%)]"
+            />
+            <div className="pointer-events-none absolute -top-3 right-0 z-0 w-[150px]">
               <HeroGlobe />
             </div>
             <div className="relative z-10">
               <p className="text-[11px] font-bold uppercase tracking-[0.3em] text-hodl-muted">Token Surveillance</p>
-              <h1 className="mt-3 text-[clamp(26px,7.6vw,31px)] font-black leading-[1.05] tracking-tight">
+              <h1 className="mt-3 text-[clamp(24px,7.2vw,29px)] font-black leading-[1.05] tracking-tight">
                 Smarter Scans.
                 <br />
                 <span className="bg-gradient-to-r from-hodl-cyan via-hodl-blue to-violet-400 bg-clip-text text-transparent">
                   Better Plays.
                 </span>
               </h1>
-              <p className="mt-3 max-w-[190px] text-[14px] leading-snug text-slate-300/85">
+              <p className="mt-2.5 max-w-[185px] text-[13.5px] leading-snug text-slate-300/85">
                 Paste a token CA and get an explainable Health score, live data and alerts in one place.
               </p>
             </div>
           </section>
 
           <div>
-            <p className="mb-2 px-1 text-xs font-extrabold uppercase tracking-[0.16em] text-hodl-cyan">
-              Paste a token CA
-            </p>
-            <div className="rounded-[22px] bg-gradient-to-r from-hodl-blue via-hodl-cyan to-hodl-green p-[1.5px] shadow-[0_0_30px_rgba(31,139,255,0.35)]">
-              <div className="rounded-[21px] bg-[#05080e] p-2">
+            <div className="rounded-[20px] bg-gradient-to-r from-hodl-blue via-hodl-cyan to-hodl-green p-[1.5px] shadow-[0_0_26px_rgba(31,139,255,0.3)]">
+              <div className="rounded-[19px] bg-[#05080e] p-2">
                 <form
                   onSubmit={(e) => {
                     e.preventDefault();
@@ -372,52 +368,54 @@ export function Landing({
                   }}
                   className="flex items-center gap-2"
                 >
-                  <Icon name="link" className="ml-2 h-5 w-5 shrink-0 text-hodl-cyan" />
-                <input
-                  suppressHydrationWarning
-                  ref={inputRef}
-                  type="text"
-                  value={mint}
-                  onChange={(e) => setMint(e.target.value)}
-                  placeholder="Solana mint address…"
-                  className="min-w-0 flex-1 bg-transparent px-1 py-3.5 text-[15px] font-medium outline-none placeholder:text-slate-500"
-                />
-                {mint ? (
-                  <button type="button" onClick={() => setMint("")} aria-label="Clear" className="px-2 text-xl text-hodl-muted">
-                    ×
+                  <div className="flex min-w-0 flex-1 items-center gap-1.5 rounded-xl border border-white/10 bg-black/40 px-2.5">
+                    <Icon name="link" className="h-4 w-4 shrink-0 text-hodl-cyan" />
+                    <input
+                      suppressHydrationWarning
+                      ref={inputRef}
+                      type="text"
+                      value={mint}
+                      onChange={(e) => setMint(e.target.value)}
+                      placeholder="Solana mint address / CA"
+                      className="min-w-0 flex-1 bg-transparent py-2.5 text-[13px] font-medium outline-none placeholder:text-slate-500"
+                    />
+                    {mint ? (
+                      <button type="button" onClick={() => setMint("")} aria-label="Clear" className="px-1 text-lg leading-none text-hodl-muted">
+                        ×
+                      </button>
+                    ) : (
+                      <button type="button" onClick={pasteCA} className="rounded-md bg-white/5 px-2.5 py-1.5 text-[11px] font-extrabold text-slate-200">
+                        Paste
+                      </button>
+                    )}
+                  </div>
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="flex shrink-0 items-center gap-1.5 rounded-xl bg-gradient-to-r from-hodl-blue to-blue-500 px-4 py-2.5 text-[14px] font-extrabold shadow-lg shadow-black/60 disabled:opacity-60"
+                  >
+                    <Icon name="bolt" className="h-4 w-4" />
+                    {loading ? "Scanning…" : "Scan"}
                   </button>
-                ) : (
-                  <button type="button" onClick={pasteCA} className="rounded-lg border border-hodl-line px-3 py-2 text-xs font-extrabold text-hodl-cyan">
-                    Paste
-                  </button>
-                )}
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-hodl-blue to-blue-500 px-5 py-3.5 text-[15px] font-extrabold shadow-lg shadow-black/60 disabled:opacity-60"
-                >
-                  <Icon name="bolt" className="h-4 w-4" />
-                  {loading ? "Scanning…" : "Scan"}
-                </button>
-              </form>
-                <div className="mt-2 grid grid-cols-4 divide-x divide-white/10 border-t border-white/10 pb-1 pt-3 text-center text-[11px] text-slate-300">
+                </form>
+                <div className="mt-2 grid grid-cols-4 divide-x divide-white/10 border-t border-white/10 pb-0.5 pt-2.5 text-center text-[10px] text-slate-300">
                   {([["Price & Chart", "chart"], ["Risk Analysis", "shield"], ["Identity Check", "people"], ["Live Alerts", "bell"]] as [string, Parameters<typeof Icon>[0]["name"]][]).map(([label, ic]) => (
-                    <span key={label} className="flex flex-col items-center gap-1.5">
-                      <Icon name={ic} className="h-5 w-5 text-hodl-cyan" />
+                    <span key={label} className="flex flex-col items-center gap-1">
+                      <Icon name={ic} className="h-4 w-4 text-hodl-cyan" />
                       {label}
                     </span>
                   ))}
                 </div>
               </div>
             </div>
-            <p className="mt-2 px-1 text-[11px] text-slate-400">Solana only · no wallet connection needed</p>
+            <p className="mt-1.5 px-1 text-[10px] text-slate-500">Solana only · no wallet connection needed</p>
           </div>
 
           {error && <p className="text-sm text-rose-300">{error}</p>}
 
-          {featured && <Featured d={featured} onScan={onScan} />}
+          <FeaturedList onScan={onScan} onViewAll={() => setView("trending")} />
 
-          <section className="hodl-card flex items-center gap-3 p-4">
+          <section className="hodl-card flex items-center gap-3 p-3.5">
             <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-hodl-line bg-black/40 text-hodl-cyan">
               <Icon name="scan" className="h-5 w-5" />
             </span>
