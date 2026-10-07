@@ -7,11 +7,18 @@ const MIN_CANDLES = 12;
 // Young tokens only have 5m candles. Eight of them (40 minutes) is enough to
 // read a drawdown. Provisional.
 const MIN_CANDLES_SHORT = 8;
+// 1m candles on brand-new pools: five minutes of trading. Provisional.
+const MIN_CANDLES_TINY = 5;
 
 function minCandles(candles: Candle[]): number {
   if (candles.length < 2) return MIN_CANDLES;
-  const gap = candles[1].time - candles[0].time;
-  return gap > 0 && gap <= 300 ? MIN_CANDLES_SHORT : MIN_CANDLES;
+  let gap = Infinity;
+  for (let i = 1; i < candles.length; i++) {
+    const g = candles[i].time - candles[i - 1].time;
+    if (g > 0 && g < gap) gap = g;
+  }
+  if (gap <= 60) return MIN_CANDLES_TINY;
+  return gap <= 300 ? MIN_CANDLES_SHORT : MIN_CANDLES;
 }
 
 const clamp = (v: number, min: number, max: number) =>

@@ -305,7 +305,9 @@ export function TokenView({ d, onBack }: { d: Data; onBack: () => void }) {
                     typeof d.health.uncappedScore === "number" &&
                     d.health.score < d.health.uncappedScore && (
                       <p className="mt-1 text-xs text-amber-300">
-                        Capped at {d.health.caps[0].max.toFixed(1)}: {d.health.caps[0].reason}
+                        {d.health.caps[0].key === "pool_new" || d.health.caps[0].key === "pool_young"
+                          ? `Early-token ceiling of ${d.health.caps[0].max.toFixed(1)}: ${d.health.caps[0].reason} Underlying score ${d.health.uncappedScore.toFixed(1)}. The ceiling lifts as the pool ages.`
+                          : `Capped at ${d.health.caps[0].max.toFixed(1)}: ${d.health.caps[0].reason}`}
                       </p>
                     )}
                 </div>

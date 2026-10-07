@@ -50,10 +50,11 @@ export async function runScan(mint: string): Promise<ScanOutcome> {
   const seenParsed = Date.parse(market.observedAt);
   const seenMs = Number.isFinite(seenParsed) ? seenParsed : Date.now();
   const young = Number.isFinite(bornMs) && seenMs - bornMs < 6 * 3600_000;
-  const candleMinutes = young ? 5 : 15;
+  const veryYoung = young && seenMs - bornMs < 2 * 3600_000;
+  const candleMinutes = veryYoung ? 1 : young ? 5 : 15;
   let candles: Candle[] | null = null;
   if (market.pairAddress && POOL_PATTERN.test(market.pairAddress)) {
-    const c = await getCandles(market.pairAddress, young ? "5m" : "15m", {
+    const c = await getCandles(market.pairAddress, veryYoung ? "1m" : young ? "5m" : "15m", {
       limit: 100,
       timeoutMs: 4000,
       freshMs: 30_000,
