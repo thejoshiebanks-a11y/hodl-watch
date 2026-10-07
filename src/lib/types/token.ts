@@ -48,5 +48,5 @@ export type TokenMarketSnapshot = {
   activeBoosts: number | null;
 
   observedAt: string;
-  provider: "dexscreener";
+  provider: "dexscreener" | "geckoterminal";
 };

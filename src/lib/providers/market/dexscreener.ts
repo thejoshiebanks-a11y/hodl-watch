@@ -144,7 +144,7 @@ function parseWebsites(
   );
 }
 
-export async function getDexScreenerSnapshot(
+async function getDexScreenerRaw(
   mint: string,
 ): Promise<TokenMarketSnapshot | null> {
   const response = await fetch(
@@ -224,4 +224,102 @@ export async function getDexScreenerSnapshot(
     observedAt: new Date().toISOString(),
     provider: "dexscreener",
   };
+}
+
+
+// ---------- GeckoTerminal fallback ----------
+type GeckoPool = {
+  attributes?: Record<string, unknown>;
+  relationships?: Record<string, { data?: { id?: string } | null } | undefined>;
+};
+type GeckoIncluded = { id?: string; attributes?: Record<string, unknown> };
+
+function gnum(v: unknown): number | null {
+  if (v === null || v === undefined || v === "") return null;
+  const n = Number(v);
+  return Number.isFinite(n) ? n : null;
+}
+
+function gperiod(a: Record<string, unknown>, key: "m5" | "h1" | "h6" | "h24"): TokenMarketPeriod {
+  const tx = ((a.transactions as Record<string, { buys?: unknown; sells?: unknown }> | undefined) ?? {})[key];
+  const vol = (a.volume_usd as Record<string, unknown> | undefined) ?? {};
+  const chg = (a.price_change_percentage as Record<string, unknown> | undefined) ?? {};
+  return {
+    buys: gnum(tx?.buys),
+    sells: gnum(tx?.sells),
+    volumeUsd: gnum(vol[key]),
+    priceChangePct: gnum(chg[key]),
+  };
+}
+
+async function getGeckoSnapshot(mint: string): Promise<TokenMarketSnapshot | null> {
+  const response = await fetch(
+    `https://api.geckoterminal.com/api/v2/networks/solana/tokens/${mint}/pools?page=1&include=base_token`,
+    {
+      headers: { Accept: "application/json;version=20230302" },
+      cache: "no-store",
+      signal: AbortSignal.timeout(8000),
+    },
+  );
+  if (!response.ok) throw new Error(`GeckoTerminal request failed: ${response.status}`);
+
+  const json = (await response.json()) as { data?: GeckoPool[]; included?: GeckoIncluded[] };
+  const pool = (json.data ?? [])
+    .filter((p) => p.relationships?.base_token?.data?.id === `solana_${mint}`)
+    .sort((a, b) => (gnum(b.attributes?.reserve_in_usd) ?? 0) - (gnum(a.attributes?.reserve_in_usd) ?? 0))[0];
+  if (!pool || !pool.attributes) return null;
+
+  const a = pool.attributes;
+  const token = (json.included ?? []).find((i) => i.id === `solana_${mint}`)?.attributes;
+  const parts = String(a.name ?? "").split(" / ");
+  const symbol = (token?.symbol as string | undefined) ?? (parts[0] || null);
+  const image = token?.image_url as string | undefined;
+
+  return {
+    mint,
+    symbol: symbol ?? null,
+    name: (token?.name as string | undefined) ?? symbol ?? null,
+    priceUsd: gnum(a.base_token_price_usd),
+    marketCapUsd: gnum(a.market_cap_usd),
+    fdvUsd: gnum(a.fdv_usd),
+    liquidityUsd: gnum(a.reserve_in_usd),
+    liquidityBase: null,
+    liquidityQuote: null,
+    pairAddress: (a.address as string | undefined) ?? null,
+    dexId: pool.relationships?.dex?.data?.id ?? null,
+    quoteSymbol: parts[1] ? parts[1].trim().split(" ")[0] : null,
+    pairCreatedAt: a.pool_created_at ? new Date(String(a.pool_created_at)).toISOString() : null,
+    periods: {
+      m5: gperiod(a, "m5"),
+      h1: gperiod(a, "h1"),
+      h6: gperiod(a, "h6"),
+      h24: gperiod(a, "h24"),
+    },
+    websites: [],
+    socials: [],
+    activeBoosts: null,
+    imageUrl: image && image !== "missing.png" ? image : null,
+    observedAt: new Date().toISOString(),
+    provider: "geckoterminal",
+  };
+}
+
+export async function getDexScreenerSnapshot(
+  mint: string,
+): Promise<TokenMarketSnapshot | null> {
+  let dexError: unknown = null;
+  try {
+    const snap = await getDexScreenerRaw(mint);
+    if (snap) return snap;
+  } catch (e) {
+    dexError = e;
+  }
+  try {
+    const gecko = await getGeckoSnapshot(mint);
+    if (gecko) return gecko;
+  } catch (e) {
+    throw dexError ?? e;
+  }
+  if (dexError) throw dexError;
+  return null;
 }
