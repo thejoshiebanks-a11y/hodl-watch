@@ -24,11 +24,11 @@ type Joint = { o: number; c: number };
 type FingerCfg = { x: number; y: number; w: number; len: [number, number, number]; j: [Joint, Joint, Joint] };
 
 const FINGERS: FingerCfg[] = [
-  { x: 77, y: 155, w: 11, len: [21, 18, 14], j: [{ o: -34, c: 8 }, { o: 10, c: 34 }, { o: 14, c: 42 }] },
-  { x: 92, y: 152, w: 12, len: [25, 21, 15], j: [{ o: -12, c: 3 }, { o: 10, c: 34 }, { o: 14, c: 42 }] },
-  { x: 107, y: 152, w: 12, len: [25, 21, 15], j: [{ o: 12, c: -3 }, { o: -10, c: -34 }, { o: -14, c: -42 }] },
-  { x: 122, y: 155, w: 11, len: [21, 18, 14], j: [{ o: 34, c: -8 }, { o: -10, c: -34 }, { o: -14, c: -42 }] },
-  { x: 69, y: 184, w: 12, len: [14, 13, 11], j: [{ o: -64, c: -16 }, { o: 14, c: 36 }, { o: 16, c: 42 }] },
+  { x: 78, y: 156, w: 12, len: [26, 19, 13], j: [{ o: -30, c: 8 }, { o: 10, c: 34 }, { o: 14, c: 42 }] },
+  { x: 93, y: 156, w: 12.5, len: [29, 20, 15], j: [{ o: -10, c: 3 }, { o: 10, c: 34 }, { o: 14, c: 42 }] },
+  { x: 108, y: 156, w: 12, len: [27, 19, 13], j: [{ o: 10, c: -3 }, { o: -10, c: -34 }, { o: -14, c: -42 }] },
+  { x: 122, y: 156, w: 10.5, len: [22, 15, 11], j: [{ o: 30, c: -8 }, { o: -10, c: -34 }, { o: -14, c: -42 }] },
+  { x: 68, y: 188, w: 14, len: [17, 15, 12], j: [{ o: -62, c: -14 }, { o: 14, c: 36 }, { o: 16, c: 42 }] },
 ];
 
 // Timeline (seconds): hand rises 0-0.9 -> fingers open 1.3-3.9 -> globe rises 2.0-4.8 -> flash 4.2
@@ -59,36 +59,43 @@ const CSS = `
 .hg-leak,.hg-flash,.hg-wave{display:none}}
 `;
 
-function Seg({ len, w, tip }: { len: number; w: number; tip?: boolean }) {
+// One tapered chrome segment with a rounded cap. Its base is tucked under the previous segment's cap.
+function Seg({ len, wb, wt }: { len: number; wb: number; wt: number }) {
+  const r = wt / 2;
+  const top = -len + r;
+  const d = `M${-wb / 2} 0L${-r} ${top}A${r} ${r} 0 0 1 ${r} ${top}L${wb / 2} 0A${wb / 2} ${wb / 2} 0 0 1 ${-wb / 2} 0Z`;
   return (
     <g>
-      <rect x={-w / 2} y={-len} width={w} height={len + 2} rx={w / 2.3}
-        fill="url(#hg-metal)" stroke="#7fe3ff" strokeOpacity=".55" strokeWidth=".6" />
-      <rect x={-w / 2 + 1.7} y={-len + 2.5} width="1.5" height={Math.max(len - 6, 2)} rx=".75" fill="#fff" opacity=".3" />
-      {tip && <circle cy={-len + 4} r="1.7" fill="#7fe8ff" className="hg-tw" />}
-      <circle r={w / 2.6} fill="#05080d" stroke="#38d6ff" strokeWidth=".8" />
-      <circle r="1.1" fill="#aaf3ff" />
+      <path d={d} fill="url(#hg-metal)" stroke="#8fdcff" strokeOpacity=".4" strokeWidth=".5" />
+      <path d={`M${-wb * 0.2} -2L${-wt * 0.2} ${top + 1}`} stroke="#fff" strokeOpacity=".28" strokeWidth="1" strokeLinecap="round" />
+      <path d={`M${wb * 0.12} -3L${wt * 0.12} ${top}`} stroke="#38d6ff" strokeOpacity=".5" strokeWidth=".7" strokeLinecap="round" />
     </g>
   );
 }
 
 function Finger({ f }: { f: FingerCfg }) {
   const [l1, l2, l3] = f.len;
+  const W = f.w;
+  const s1 = { wb: W, wt: W * 0.86 };
+  const s2 = { wb: W * 0.84, wt: W * 0.74 };
+  const s3 = { wb: W * 0.72, wt: W * 0.62 };
+  const top1 = -l1 + s1.wt / 2;
+  const top2 = -l2 + s2.wt / 2;
   const jv = (k: number) => ({ "--o": `${f.j[k].o}deg`, "--c": `${f.j[k].c}deg` }) as CSSProperties;
   return (
     <g transform={`translate(${f.x} ${f.y})`}>
       <g className="hg-j" style={jv(0)}>
-        <Seg len={l1} w={f.w} />
-        <g transform={`translate(0 ${-l1})`}>
+        <g transform={`translate(0 ${top1})`}>
           <g className="hg-j" style={jv(1)}>
-            <Seg len={l2} w={f.w - 1.5} />
-            <g transform={`translate(0 ${-l2})`}>
+            <g transform={`translate(0 ${top2})`}>
               <g className="hg-j" style={jv(2)}>
-                <Seg len={l3} w={f.w - 3} tip />
+                <Seg len={l3} {...s3} />
               </g>
             </g>
+            <Seg len={l2} {...s2} />
           </g>
         </g>
+        <Seg len={l1} {...s1} />
       </g>
     </g>
   );
@@ -124,16 +131,23 @@ export function HeroGlobe() {
             <stop offset="1" stopColor="#38d6ff" stopOpacity="0" />
           </radialGradient>
           <linearGradient id="hg-metal" x1="0" y1="0" x2="1" y2="0">
-            <stop stopColor="#9fb2cc" />
-            <stop offset=".28" stopColor="#3b485c" />
-            <stop offset=".65" stopColor="#111823" />
-            <stop offset="1" stopColor="#06090e" />
+            <stop stopColor="#0b1119" />
+            <stop offset=".18" stopColor="#56677e" />
+            <stop offset=".36" stopColor="#c9d7e8" />
+            <stop offset=".52" stopColor="#3a475a" />
+            <stop offset=".78" stopColor="#0d131c" />
+            <stop offset="1" stopColor="#04070b" />
           </linearGradient>
           <linearGradient id="hg-palm" x1="0" y1="0" x2="1" y2="1">
-            <stop stopColor="#4a586d" />
-            <stop offset=".45" stopColor="#151c28" />
+            <stop stopColor="#52627a" />
+            <stop offset=".35" stopColor="#1a2230" />
             <stop offset="1" stopColor="#05080d" />
           </linearGradient>
+          <radialGradient id="hg-core">
+            <stop stopColor="#bff6ff" stopOpacity=".95" />
+            <stop offset=".45" stopColor="#38d6ff" stopOpacity=".55" />
+            <stop offset="1" stopColor="#38d6ff" stopOpacity="0" />
+          </radialGradient>
           <clipPath id="hg-clip">
             <circle cx={CX} cy={CY} r={R} />
           </clipPath>
@@ -210,19 +224,27 @@ export function HeroGlobe() {
 
         <ellipse cx={CX} cy="206" rx="50" ry="8" fill="#38d6ff" opacity=".3" filter="url(#hg-blur)" />
 
-        {/* Robot hand: palm, wrist, then five jointed fingers */}
-        <g className="hg-rhand">
-          <path
-            d="M66 152Q66 150 70 150H130Q134 150 134 152L136 188Q136 196 128 199L124 201V214H76V201L72 199Q64 196 64 188Z"
-            fill="url(#hg-palm)" stroke="#7fe3ff" strokeOpacity=".5" strokeWidth=".8"
-          />
-          <path d="M72 160V190M128 160V190M84 196H116" stroke="#38d6ff" strokeOpacity=".28" strokeWidth=".7" fill="none" />
-          <rect x="74" y="201" width="52" height="6" rx="2" fill="#05080d" stroke="#38d6ff" strokeOpacity=".7" strokeWidth=".7" />
-          <polygon points="100,166 110,172 110,184 100,190 90,184 90,172" fill="#05080d" stroke="#38d6ff" strokeWidth="1" />
-          <circle cx="100" cy="178" r="4" fill="#7fe8ff" filter="url(#hg-neon)" className="hg-tw" />
-          {FINGERS.map((f) => (
-            <Finger key={`${f.x}-${f.y}`} f={f} />
-          ))}
+        {/* Robot hand: palm, wrist, jointed chrome fingers, knuckle guard */}
+        <g transform="translate(100 214) scale(1.1) translate(-100 -214)">
+          <g className="hg-rhand">
+            <path
+              d="M67 157Q66 150 73 150H127Q134 150 133 157L131 184Q130 196 122 202H78Q70 196 69 184Z"
+              fill="url(#hg-palm)" stroke="#8fdcff" strokeOpacity=".45" strokeWidth=".7"
+            />
+            <path d="M73 150Q70 160 72 176M127 150Q130 160 128 176" stroke="#fff" strokeOpacity=".1" strokeWidth="2" fill="none" />
+            <path d="M76 166H124M80 192H120" stroke="#38d6ff" strokeOpacity=".22" strokeWidth=".6" fill="none" />
+            <path d="M76 202H124L121 214H79Z" fill="url(#hg-palm)" stroke="#8fdcff" strokeOpacity=".4" strokeWidth=".6" />
+            <path d="M78 206H122M79 210H121" stroke="#38d6ff" strokeOpacity=".3" strokeWidth=".6" />
+            {FINGERS.slice(0, 4).map((f) => (
+              <Finger key={`${f.x}-${f.y}`} f={f} />
+            ))}
+            <rect x="68" y="150" width="64" height="11" rx="5.5" fill="url(#hg-palm)" stroke="#8fdcff" strokeOpacity=".5" strokeWidth=".7" />
+            <path d="M74 155.5H126" stroke="#38d6ff" strokeOpacity=".35" strokeWidth=".7" strokeLinecap="round" />
+            <Finger f={FINGERS[4]} />
+            <ellipse cx="72" cy="191" rx="7.5" ry="9.5" transform="rotate(-18 72 191)" fill="url(#hg-palm)" stroke="#8fdcff" strokeOpacity=".45" strokeWidth=".7" />
+            <circle cx="100" cy="178" r="11" fill="url(#hg-core)" className="hg-tw" />
+            <circle cx="100" cy="178" r="7.5" fill="none" stroke="#7fe8ff" strokeOpacity=".7" strokeWidth=".8" />
+          </g>
         </g>
 
         {SPARKS.map(([x, y, delay]) => (
