@@ -6,6 +6,7 @@ import { detectEvents } from "@/lib/watch/detect";
 import { putSnapshot, pushEvents } from "@/lib/watch/events";
 import { notifyWatchers } from "@/lib/push/notify";
 import { updatePeak } from "@/lib/watch/peaks";
+import { syncWhaleWebhook } from "@/lib/whale/helius";
 
 export const maxDuration = 60;
 export const dynamic = "force-dynamic";
@@ -38,6 +39,8 @@ async function processMint(
 
   const curr = toSnapshot(outcome.data);
   await updatePeak(mint, curr.priceUsd, curr.liquidityUsd, curr.at);
+  const pool = outcome.data.market.pairAddress;
+  if (pool) await getRedis().set(`pool:${mint}`, pool);
   const found = prev ? detectEvents(prev, curr) : [];
 
   await pushEvents(mint, curr.symbol, curr.at, found);
@@ -107,9 +110,20 @@ export async function GET(request: Request) {
 
   await Promise.all(Array.from({ length: CONCURRENCY }, worker));
 
+  let whale: unknown = null;
+  if (Date.now() - started < 52_000) {
+    try {
+      whale = await syncWhaleWebhook();
+    } catch (e) {
+      console.error("cron: whale sync failed", e);
+      whale = { ok: false, reason: "error" };
+    }
+  }
+
   return NextResponse.json({
     watched,
     due: due.length,
+    whale,
     scanned: results.length,
     events: results.reduce((n, r) => n + r.events, 0),
     ms: Date.now() - started,
