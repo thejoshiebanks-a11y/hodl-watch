@@ -46,7 +46,17 @@ export function computeCaps(
   if (isNum(d24) && d24 <= -70) {
     cap("crash_24h", 2, `Price is down ${Math.abs(d24).toFixed(0)}% in 24h.`);
   } else if (isNum(d24) && d24 <= -50) {
-    if (structureHeld) {
+    // Steadying: no fresh fall in the last hour and a mild 6h move. Both
+    // readings are needed, so missing data never counts as steady.
+    // Provisional thresholds until calibrated.
+    const steadying = isNum(d1) && d1 >= -3 && isNum(d6) && d6 >= -15;
+    if (structureHeld && steadying) {
+      cap(
+        "fall_24h_held_steady",
+        6.5,
+        `Price is down ${Math.abs(d24).toFixed(0)}% in 24h but has steadied over the last 6 hours, and liquidity and the holder base are intact.`,
+      );
+    } else if (structureHeld) {
       cap(
         "fall_24h_held",
         5,
