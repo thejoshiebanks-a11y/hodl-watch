@@ -255,7 +255,9 @@ export function PriceChart({ pool, mint }: { pool: string | null; mint?: string 
     }
 
     load();
-    const id = setInterval(load, 15000);
+    const id = setInterval(() => {
+      if (!document.hidden) load();
+    }, 6000);
     return () => {
       cancelled = true;
       clearInterval(id);

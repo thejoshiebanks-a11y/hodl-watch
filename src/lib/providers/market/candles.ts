@@ -38,7 +38,7 @@ export async function getCandles(
 ): Promise<CandleResult> {
   const limit = opts.limit ?? 200;
   const timeoutMs = opts.timeoutMs ?? 8000;
-  const freshMs = opts.freshMs ?? 10_000;
+  const freshMs = opts.freshMs ?? 6_000;
 
   const key = `${pool}:${timeframe}:${limit}`;
   const hit = cache.get(key);
