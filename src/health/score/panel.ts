@@ -56,6 +56,7 @@ const capSide = (key: string): "setup" | "safety" =>
   SETUP_CAP.test(key) ? "setup" : "safety";
 
 const UNLOCK: Record<string, string> = {
+  fresh_launch: "The data sources index the pool and confirm it holds funds. HODL rechecks every 25 seconds.",
   liquidity_unknown: "Liquidity becomes readable and the pool is confirmed to hold funds.",
   liquidity_zero: "Liquidity is added back to the pool.",
   liquidity_tiny: "Liquidity rises above $5K.",
@@ -147,6 +148,7 @@ export function buildPanel(input: {
   const safety = s.score === null ? null : r1(Math.min(s.score, lowest(safetyCaps)));
   const setup = t.score === null ? null : r1(Math.min(t.score, lowest(setupCaps)));
   const hardFlag = safetyCaps.some((c) => c.max <= 3);
+  const fresh = caps.some((c) => c.key === "fresh_launch");
 
   const confidence: Panel["confidence"] =
     input.missingCritical || input.coverage < 0.6
@@ -188,7 +190,7 @@ export function buildPanel(input: {
     setup,
     safetyConfidence: Number(s.confidence.toFixed(2)),
     setupConfidence: Number(t.confidence.toFixed(2)),
-    verdict: verdictFor(safety, setup, hardFlag),
+    verdict: fresh && !hardFlag ? "Too new to verify fully" : verdictFor(safety, setup, hardFlag),
     confidence,
     reasons,
     watchFor,

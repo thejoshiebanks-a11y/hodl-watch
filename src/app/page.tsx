@@ -55,6 +55,7 @@ export default function Home() {
   }
 
   const openMint = snapshot?.market.mint;
+  const fresh = snapshot?.health.caps?.some((c) => c.key === "fresh_launch") ?? false;
 
   useEffect(() => {
     if (!openMint) return;
@@ -62,9 +63,9 @@ export default function Home() {
       if (document.hidden) return;
       const result = await requestScan(openMint);
       if ("data" in result) setSnapshot(result.data);
-    }, 30000);
+    }, fresh ? 25_000 : 30_000);
     return () => clearInterval(id);
-  }, [openMint]);
+  }, [openMint, fresh]);
 
   return (
     <main className="min-h-screen overflow-x-hidden text-hodl-text">

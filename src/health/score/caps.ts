@@ -93,11 +93,26 @@ export function computeCaps(
     isNum(p.h24.volumeUsd) &&
     p.h24.volumeUsd > 0
   ) {
-    cap(
-      "liquidity_unknown",
-      3,
-      "Liquidity could not be read while the token still trades. A drained pool looks like this, and exit liquidity cannot be verified.",
-    );
+    {
+    // A token minutes old has no readable liquidity yet because the data
+    // sources have not indexed it. That is "too new to know", not "drained".
+    const bornAt = market.pairCreatedAt ?? identity.tokenDetectedAt;
+    const bornMs = typeof bornAt === "string" ? Date.parse(bornAt) : NaN;
+    const nowParsed = Date.parse(market.observedAt);
+    const nowMs = Number.isFinite(nowParsed) ? nowParsed : Date.now();
+    const ageMs = nowMs - bornMs;
+    const hadLiquidity = isNum(peak?.liquidityUsd) && (peak?.liquidityUsd ?? 0) > 0;
+    if (Number.isFinite(ageMs) && ageMs >= 0 && ageMs < 30 * 60_000 && !hadLiquidity) {
+      const mins = Math.max(1, Math.round(ageMs / 60_000));
+      cap(
+        "fresh_launch",
+        5,
+        `Fresh launch (${mins} min old): liquidity is not indexed yet, so exit liquidity cannot be verified.`,
+      );
+    } else {
+      cap("liquidity_unknown", 3, "Liquidity could not be read while the token still trades. A drained pool looks like this, and exit liquidity cannot be verified.");
+    }
+  }
   }
 
   // Contract controls
