@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import {
   CandlestickSeries,
   ColorType,
@@ -328,7 +329,7 @@ export function PriceChart({ pool, mint }: { pool: string | null; mint?: string 
                 type="button"
                 onClick={() => setOpenKey(b.key === openKey ? null : b.key)}
                 aria-label={`${top.title}${b.events.length > 1 ? ` and ${b.events.length - 1} more` : ""}`}
-                className="pointer-events-auto absolute flex h-7 w-7 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full text-[13px] leading-none"
+                className="pointer-events-auto absolute flex h-7 w-7 before:absolute before:-inset-2 before:content-[''] -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full text-[13px] leading-none"
                 style={{
                   left: b.x,
                   top: b.y,
@@ -364,40 +365,7 @@ export function PriceChart({ pool, mint }: { pool: string | null; mint?: string 
           </span>
         )}
 
-        {open && (
-          <div className="absolute inset-x-2 bottom-2 z-10 rounded-2xl border border-white/10 bg-[#0b1230]/95 p-3 backdrop-blur">
-            <div className="flex items-center justify-between">
-              <p className="text-[10px] uppercase tracking-[0.18em] text-hodl-muted">
-                {open.events.length > 1 ? `${open.events.length} changes here` : "Change"}
-              </p>
-              <button
-                type="button"
-                onClick={() => setOpenKey(null)}
-                aria-label="Close"
-                className="px-2 text-hodl-muted"
-              >
-                ✕
-              </button>
-            </div>
-            <ul className="mt-2 max-h-40 space-y-2 overflow-y-auto">
-              {open.events.slice(0, 6).map((e) => (
-                <li key={e.id} className="flex gap-2">
-                  <span
-                    className="mt-1.5 h-2 w-2 shrink-0 rounded-full"
-                    style={{ background: SEVERITY_COLOR[e.severity] }}
-                  />
-                  <div className="min-w-0">
-                    <p className="text-sm">
-                      {e.title}{" "}
-                      <span className="text-[11px] text-hodl-muted">{ago(e.at)}</span>
-                    </p>
-                    <p className="text-xs text-hodl-muted">{e.detail}</p>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
+        {open && <EventSheet events={open.events} onClose={() => setOpenKey(null)} />}
 
         {!hasData && (
           <div className="absolute inset-0 flex items-center justify-center px-6 text-center text-xs text-hodl-muted">
@@ -438,5 +406,114 @@ export function PriceChart({ pool, mint }: { pool: string | null; mint?: string 
         </div>
       )}
     </div>
+  );
+}
+
+
+const SEVERITY_LABEL = { critical: "Critical", warning: "Warning", info: "Info" } as const;
+
+function EventSheet({ events, onClose }: { events: ChartEvent[]; onClose: () => void }) {
+  const [shown, setShown] = useState(false);
+  const [drag, setDrag] = useState(0);
+  const startY = useRef<number | null>(null);
+
+  useEffect(() => {
+    const raf = requestAnimationFrame(() => setShown(true));
+    const onKey = (ev: KeyboardEvent) => {
+      if (ev.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => {
+      cancelAnimationFrame(raf);
+      window.removeEventListener("keydown", onKey);
+    };
+  }, [onClose]);
+
+  return createPortal(
+    <div className="fixed inset-0 z-[100]">
+      <button
+        type="button"
+        aria-label="Close"
+        onClick={onClose}
+        className={`absolute inset-0 bg-black/60 transition-opacity duration-200 ${
+          shown ? "opacity-100" : "opacity-0"
+        }`}
+      />
+      <div
+        className="absolute inset-x-0 bottom-0 max-h-[75vh] overflow-hidden rounded-t-3xl border-t border-white/10 bg-[#0b1230] shadow-2xl transition-transform duration-200"
+        style={{
+          transform: shown ? `translateY(${drag}px)` : "translateY(100%)",
+          transitionDuration: drag ? "0ms" : undefined,
+        }}
+      >
+        <div
+          className="touch-none px-4 pb-3 pt-2"
+          onTouchStart={(e) => {
+            startY.current = e.touches[0].clientY;
+          }}
+          onTouchMove={(e) => {
+            if (startY.current === null) return;
+            setDrag(Math.max(0, e.touches[0].clientY - startY.current));
+          }}
+          onTouchEnd={() => {
+            if (drag > 90) onClose();
+            setDrag(0);
+            startY.current = null;
+          }}
+        >
+          <div className="mx-auto h-1 w-10 rounded-full bg-white/20" />
+          <div className="mt-3 flex items-center justify-between">
+            <p className="text-[10px] uppercase tracking-[0.18em] text-hodl-muted">
+              {events.length > 1 ? `${events.length} changes here` : "Change"}
+            </p>
+            <button type="button" onClick={onClose} aria-label="Close" className="px-2 text-hodl-muted">
+              ✕
+            </button>
+          </div>
+        </div>
+
+        <ul className="max-h-[55vh] space-y-3 overflow-y-auto px-4 pb-[max(1.25rem,env(safe-area-inset-bottom))]">
+          {events.slice(0, 20).map((e) => {
+            const color = SEVERITY_COLOR[e.severity];
+            const side: Side = markerFor(e).position === "belowBar" ? "below" : "above";
+            return (
+              <li key={e.id} className="rounded-2xl border border-white/10 bg-white/[0.03] p-3">
+                <div className="flex items-center gap-2.5">
+                  <span
+                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-base"
+                    style={{ border: `2px solid ${color}`, background: "#0b1230" }}
+                  >
+                    {glyphFor(e.kind, side)}
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-semibold">{e.title}</p>
+                    <p className="text-[11px] text-hodl-muted">
+                      {ago(e.at)} ·{" "}
+                      {new Date(e.at).toLocaleString([], {
+                        month: "short",
+                        day: "numeric",
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    </p>
+                  </div>
+                  <span
+                    className="shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider"
+                    style={{ color, background: `${color}22` }}
+                  >
+                    {SEVERITY_LABEL[e.severity]}
+                  </span>
+                </div>
+                <p className="mt-2.5 text-xs leading-relaxed text-hodl-muted">{e.detail}</p>
+                <p className="mt-2 inline-block rounded-lg bg-white/5 px-2 py-1 text-[11px] font-medium">
+                  {markerFor(e).text}
+                </p>
+              </li>
+            );
+          })}
+        </ul>
+      </div>
+    </div>,
+    document.body,
   );
 }
