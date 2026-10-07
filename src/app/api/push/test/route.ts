@@ -19,8 +19,8 @@ export async function POST(request: Request) {
     }
 
     const result = await sendPush(id, {
-      title: "HODL alerts are on",
-      body: "This is a test. Real alerts will explain what changed and why.",
+      title: "✅ HODL alerts are live",
+      body: "You'll get a ping when a watched token shifts, with what changed and why.",
       url: "/",
       tag: "hodl-test",
     });

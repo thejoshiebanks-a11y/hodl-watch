@@ -8,6 +8,7 @@ import { SUB_DEVICES, sendPush } from "./send";
 
 const COOLDOWN_SECONDS = 30 * 60;
 const RANK = { critical: 0, warning: 1, info: 2 } as const;
+const DOT = { critical: "🔴", warning: "🟡", info: "🔵" } as const;
 
 export async function notifyWatchers(
   mint: string,
@@ -50,10 +51,10 @@ export async function notifyWatchers(
     const top = fresh[0];
     const more = fresh.length - 1;
     const result = await sendPush(device, {
-      title: `${symbol ? `$${symbol}` : "A watched token"}: ${top.title}`,
+      title: `${DOT[top.severity]} ${symbol ? `$${symbol}` : "Watched token"} · ${top.title}`,
       body:
         more > 0
-          ? `${top.detail} (+${more} more change${more > 1 ? "s" : ""})`
+          ? `${top.detail} · +${more} more, tap to review`
           : top.detail,
       url: "/",
       tag: `hodl-${mint}`,
