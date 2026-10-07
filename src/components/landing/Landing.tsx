@@ -337,41 +337,42 @@ export function Landing({
         </span>
       </header>
 
-      {view === "home" && (
-        <div className="pointer-events-none absolute right-0 top-12 z-0 w-[150px]">
-          <HeroGlobe />
-        </div>
-      )}
 
       {view === "home" && (
         <div className="relative z-10 mt-8 space-y-5">
-          <section>
-            <p className="text-[11px] font-bold uppercase tracking-[0.3em] text-hodl-muted">Token Surveillance</p>
-            <h1 className="mt-3 text-[clamp(30px,9vw,38px)] font-black leading-[1.03] tracking-tight">
-              Smarter Scans.
-              <br />
-              <span className="bg-gradient-to-r from-hodl-cyan via-hodl-blue to-violet-400 bg-clip-text text-transparent">
-                Better Plays.
-              </span>
-            </h1>
-            <p className="mt-3 max-w-[300px] text-[15px] leading-snug text-slate-300/85">
-              Paste a token CA and get an explainable Health score, live data and alerts in one place.
-            </p>
+          <section className="relative min-h-[186px]">
+            <div className="pointer-events-none absolute right-0 top-0 z-0 w-[158px]">
+              <HeroGlobe />
+            </div>
+            <div className="relative z-10">
+              <p className="text-[11px] font-bold uppercase tracking-[0.3em] text-hodl-muted">Token Surveillance</p>
+              <h1 className="mt-3 text-[clamp(26px,7.6vw,31px)] font-black leading-[1.05] tracking-tight">
+                Smarter Scans.
+                <br />
+                <span className="bg-gradient-to-r from-hodl-cyan via-hodl-blue to-violet-400 bg-clip-text text-transparent">
+                  Better Plays.
+                </span>
+              </h1>
+              <p className="mt-3 max-w-[190px] text-[14px] leading-snug text-slate-300/85">
+                Paste a token CA and get an explainable Health score, live data and alerts in one place.
+              </p>
+            </div>
           </section>
 
           <div>
             <p className="mb-2 px-1 text-xs font-extrabold uppercase tracking-[0.16em] text-hodl-cyan">
               Paste a token CA
             </p>
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                onScan(mint);
-              }}
-              className="rounded-[20px] bg-gradient-to-r from-hodl-blue via-hodl-cyan to-hodl-green p-[1.5px] shadow-[0_0_30px_rgba(31,139,255,0.35)]"
-            >
-              <div className="flex items-center gap-2 rounded-[19px] bg-[#05080e] p-2">
-                <Icon name="link" className="ml-2 h-5 w-5 shrink-0 text-hodl-cyan" />
+            <div className="rounded-[22px] bg-gradient-to-r from-hodl-blue via-hodl-cyan to-hodl-green p-[1.5px] shadow-[0_0_30px_rgba(31,139,255,0.35)]">
+              <div className="rounded-[21px] bg-[#05080e] p-2">
+                <form
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    onScan(mint);
+                  }}
+                  className="flex items-center gap-2"
+                >
+                  <Icon name="link" className="ml-2 h-5 w-5 shrink-0 text-hodl-cyan" />
                 <input
                   suppressHydrationWarning
                   ref={inputRef}
@@ -398,17 +399,18 @@ export function Landing({
                   <Icon name="bolt" className="h-4 w-4" />
                   {loading ? "Scanning…" : "Scan"}
                 </button>
+              </form>
+                <div className="mt-2 grid grid-cols-4 divide-x divide-white/10 border-t border-white/10 pb-1 pt-3 text-center text-[11px] text-slate-300">
+                  {([["Price & Chart", "chart"], ["Risk Analysis", "shield"], ["Identity Check", "people"], ["Live Alerts", "bell"]] as [string, Parameters<typeof Icon>[0]["name"]][]).map(([label, ic]) => (
+                    <span key={label} className="flex flex-col items-center gap-1.5">
+                      <Icon name={ic} className="h-5 w-5 text-hodl-cyan" />
+                      {label}
+                    </span>
+                  ))}
+                </div>
               </div>
-            </form>
-            <p className="mt-2 px-1 text-[11px] text-slate-400">Solana only · no wallet connection needed</p>
-            <div className="mt-3 grid grid-cols-4 divide-x divide-white/10 rounded-2xl border border-hodl-line bg-black/30 py-3 text-center text-[11px] text-slate-300">
-              {([["Price & Chart", "chart"], ["Risk Analysis", "shield"], ["Identity Check", "people"], ["Live Alerts", "bell"]] as [string, Parameters<typeof Icon>[0]["name"]][]).map(([label, ic]) => (
-                <span key={label} className="flex flex-col items-center gap-1.5">
-                  <Icon name={ic} className="h-5 w-5 text-hodl-cyan" />
-                  {label}
-                </span>
-              ))}
             </div>
+            <p className="mt-2 px-1 text-[11px] text-slate-400">Solana only · no wallet connection needed</p>
           </div>
 
           {error && <p className="text-sm text-rose-300">{error}</p>}
@@ -416,14 +418,15 @@ export function Landing({
           {featured && <Featured d={featured} onScan={onScan} />}
 
           <section className="hodl-card flex items-center gap-3 p-4">
-            <span className="flex h-11 w-11 items-center justify-center rounded-xl border border-hodl-line bg-black/40 text-hodl-cyan">
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-hodl-line bg-black/40 text-hodl-cyan">
               <Icon name="scan" className="h-5 w-5" />
             </span>
             <div className="min-w-0 flex-1">
               <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-hodl-muted">Why HODL?</p>
-              <p className="text-[17px] font-extrabold">You trade. HODL watches.</p>
+              <p className="text-[15px] font-extrabold leading-tight">You trade. HODL watches.</p>
+              <p className="mt-0.5 text-[11px] text-slate-400">Real data, not hope.</p>
             </div>
-            <button type="button" onClick={() => setView("more")} className="rounded-full border border-hodl-cyan/60 px-4 py-2 text-xs font-bold text-hodl-cyan">
+            <button type="button" onClick={() => setView("more")} className="shrink-0 whitespace-nowrap rounded-full border border-hodl-cyan/60 px-3.5 py-2 text-[11px] font-bold text-hodl-cyan">
               Learn more →
             </button>
           </section>
