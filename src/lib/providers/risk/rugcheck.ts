@@ -88,6 +88,8 @@ const RugcheckResponseSchema = z.object({
     .nullable()
     .optional(),
 
+  totalMarketLiquidity: z.unknown().optional(),
+
   risks: z
     .array(
       z.object({
@@ -212,6 +214,10 @@ export async function getRugcheckIdentity(
     jupVerified: parsed.verification?.jup_verified ?? null,
     insiderHolderCount: parsed.graphInsidersDetected ?? null,
     transferFeePct: parsed.transferFee?.pct ?? null,
+    totalMarketLiquidityUsd: ((v: unknown) => {
+      const n = typeof v === "string" ? Number(v) : v;
+      return typeof n === "number" && Number.isFinite(n) ? n : null;
+    })(parsed.totalMarketLiquidity),
     riskFlags: parsed.risks
       ? parsed.risks.flatMap((r) =>
           r.name ? [{ name: r.name, level: r.level ?? "info" }] : [],

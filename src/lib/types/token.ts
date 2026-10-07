@@ -27,6 +27,9 @@ export type TokenMarketSnapshot = {
   liquidityUsd: number | null;
   liquidityBase: number | null;
   liquidityQuote: number | null;
+  /** True for pump.fun tokens that have not graduated to a pool. */
+  bondingCurve?: boolean;
+  liquiditySource?: "dexscreener" | "rugcheck_curve";
 
   pairAddress: string | null;
   dexId: string | null;

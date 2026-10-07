@@ -4,19 +4,45 @@ import { POOL_PATTERN, getCandles } from "@/lib/providers/market/candles";
 import { calculateHealth } from "@/health/score/calculate";
 import { getPeak } from "@/lib/watch/peaks";
 import type { Candle } from "@/lib/types/chart";
+import type { TokenIdentitySnapshot } from "@/lib/types/identity";
 import type { ScanSuccess } from "@/lib/types/scan";
+import type { TokenMarketSnapshot } from "@/lib/types/token";
 
 export type ScanOutcome =
   | { ok: true; data: ScanSuccess["data"] }
   | { ok: false; code: "TOKEN_NOT_FOUND" };
 
+// Pump.fun tokens trade on a bonding curve, not a pool. DexScreener reports no
+// liquidity for them, but RugCheck's market total matched GeckoTerminal's
+// reserves on the two tokens we could compare. Provisional until calibrated.
+function withCurveLiquidity(
+  market: TokenMarketSnapshot,
+  identity: TokenIdentitySnapshot,
+): TokenMarketSnapshot {
+  if (market.dexId !== "pumpfun") return market;
+
+  const reserves = identity.totalMarketLiquidityUsd;
+  const curveLiquidity =
+    typeof reserves === "number" && reserves > 0 ? reserves : null;
+  const useCurve = market.liquidityUsd === null && curveLiquidity !== null;
+
+  return {
+    ...market,
+    bondingCurve: true,
+    liquidityUsd: useCurve ? curveLiquidity : market.liquidityUsd,
+    liquiditySource: useCurve ? "rugcheck_curve" : "dexscreener",
+  };
+}
+
 export async function runScan(mint: string): Promise<ScanOutcome> {
-  const [market, identity] = await Promise.all([
+  const [dexMarket, identity] = await Promise.all([
     getDexScreenerSnapshot(mint),
     getRugcheckIdentity(mint),
   ]);
 
-  if (!market) return { ok: false, code: "TOKEN_NOT_FOUND" };
+  if (!dexMarket) return { ok: false, code: "TOKEN_NOT_FOUND" };
+
+  const market = withCurveLiquidity(dexMarket, identity);
 
   let candles: Candle[] | null = null;
   if (market.pairAddress && POOL_PATTERN.test(market.pairAddress)) {

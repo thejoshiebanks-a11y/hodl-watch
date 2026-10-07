@@ -57,6 +57,7 @@ const capSide = (key: string): "setup" | "safety" =>
 
 const UNLOCK: Record<string, string> = {
   fresh_launch: "The data sources index the pool and confirm it holds funds. HODL rechecks every 25 seconds.",
+  bonding_curve: "The token graduates to a pool and its liquidity is confirmed.",
   liquidity_unknown: "Liquidity becomes readable and the pool is confirmed to hold funds.",
   liquidity_zero: "Liquidity is added back to the pool.",
   liquidity_tiny: "Liquidity rises above $5K.",

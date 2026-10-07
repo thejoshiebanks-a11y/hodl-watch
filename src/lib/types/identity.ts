@@ -33,6 +33,8 @@ export type TokenIdentitySnapshot = {
   transferFeePct: number | null;
   /** RugCheck's own named red flags. Optional so older saved scans still type-check. */
   riskFlags?: { name: string; level: string }[] | null;
+  /** RugCheck's total market liquidity. Only used for bonding-curve tokens. */
+  totalMarketLiquidityUsd?: number | null;
   observedAt: string;
   provider: string;
 };

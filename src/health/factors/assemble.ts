@@ -85,7 +85,10 @@ export function assembleHealthFactors(
   add(f, "liquidity_ratio", "Liquidity / market cap", "LIQUIDITY", scoreLiquidityRatio(market.liquidityUsd, market.marketCapUsd), "Liquidity-to-market-cap ratio is unavailable.");
   add(f, "liquidity_turnover", "24h volume / liquidity", "LIQUIDITY", scoreVolumeToLiquidity(p.h24.volumeUsd, market.liquidityUsd), "Volume or liquidity is unavailable.");
   // An LP lock means nothing when there is no liquidity left to lock.
-  const hasPool = typeof market.liquidityUsd === "number" && market.liquidityUsd > 0;
+  const hasPool =
+    typeof market.liquidityUsd === "number" &&
+    market.liquidityUsd > 0 &&
+    !market.bondingCurve;
   add(f, "liquidity_lp_lock", "LP locked", "LIQUIDITY", scoreLpLock(hasPool ? identity.lpLockedPctWeighted : null), "LP lock data is unavailable.");
   add(f, "liquidity_impact", "Price impact ($1k buy)", "LIQUIDITY", scorePriceImpact(market.liquidityUsd), "USD liquidity is unavailable.");
 

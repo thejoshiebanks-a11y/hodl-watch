@@ -61,7 +61,8 @@ export function toSnapshot(d: Data): WatchSnapshot {
     partial: d.health.partial || d.health.missingCritical,
     domains,
     priceUsd: d.market.priceUsd,
-    liquidityUsd: d.market.liquidityUsd,
+    // Curve reserves move with every trade, so they are not alert-worthy.
+    liquidityUsd: d.market.bondingCurve ? null : d.market.liquidityUsd,
     volume1hUsd: p.h1.volumeUsd,
     volume24hUsd: p.h24.volumeUsd,
     buyShare: flow.share,

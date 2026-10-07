@@ -4,6 +4,7 @@ import type { TokenMarketSnapshot } from "@/lib/types/token";
 import { assembleHealthFactors } from "../factors/assemble";
 import { aggregateHealth } from "./aggregate";
 import { computeCaps, type PeakInfo } from "./caps";
+import { applyCurveRules } from "./curve";
 import type { HealthScore } from "./types";
 
 export function calculateHealth(
@@ -18,7 +19,10 @@ export function calculateHealth(
   const factors = assembleHealthFactors(market, identity, candles);
   const base = aggregateHealth(factors);
 
-  const caps = computeCaps(market, identity, peak ?? null);
+  const caps = applyCurveRules(
+    computeCaps(market, identity, peak ?? null),
+    market.bondingCurve === true,
+  );
   // Unknowns count against a token instead of quietly dropping out.
   if (base.missingCritical) {
     caps.push({
