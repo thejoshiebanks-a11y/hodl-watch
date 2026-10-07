@@ -7,6 +7,7 @@ import { scoreDrawdown, scoreRecovery, scoreVolatility } from "./candles";
 import { scoreLiquidityRatio, scoreLiquidityUsd } from "./liquidity";
 import { scoreTape1h, scoreTape5m } from "./tape";
 import { scoreFlow } from "./flow";
+import { scoreTradesPerHolder, scoreVolumeToMarketCap } from "./wash";
 import {
   scoreAuthorityPair,
   scoreTopHolderConcentration,
@@ -99,6 +100,8 @@ export function assembleHealthFactors(
   add(f, "flow", "Buy/sell flow (1h, 6h fallback)", "FLOW", flow, "Buy/sell counts are too few to judge in 1h and 6h.");
   add(f, "flow_24h", "24h buy/sell flow", "FLOW", scoreFlow(p.h24.buys, p.h24.sells, "24h"), "24h buy/sell counts are unavailable or too few.");
   add(f, "flow_activity", "Trading activity (24h)", "FLOW", scoreActivity(p.h24.buys, p.h24.sells), "24h transaction counts are unavailable.");
+  add(f, "flow_wash_volume", "24h volume / market cap", "FLOW", scoreVolumeToMarketCap(p.h24.volumeUsd, market.marketCapUsd), "Volume or market cap is unavailable.");
+  add(f, "flow_wash_txns", "24h trades per holder", "FLOW", scoreTradesPerHolder(p.h24.buys, p.h24.sells, identity.holderCount), "Trade or holder counts are too few to judge.");
 
   // HOLDERS
   add(f, "holders_top", "Top-holder concentration (excl. pools)", "HOLDERS", scoreTopHolderConcentration(identity.topHolderPctExcludingKnown ?? identity.topHolderPct), "Top-holder data is unavailable.");

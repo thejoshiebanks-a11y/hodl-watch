@@ -1,4 +1,4 @@
-export const HEALTH_VERSION = "health-v0.2.0" as const;
+export const HEALTH_VERSION = "health-v0.3.0" as const;
 
 export const HEALTH_GROUP_WEIGHTS = {
   MARKET: 0.15,

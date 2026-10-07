@@ -6,6 +6,7 @@ import { detectEvents } from "@/lib/watch/detect";
 import { putSnapshot, pushEvents } from "@/lib/watch/events";
 import { notifyWatchers } from "@/lib/push/notify";
 import { updatePeak } from "@/lib/watch/peaks";
+import { pushHistory } from "@/lib/watch/history";
 import { syncWhaleWebhook } from "@/lib/whale/helius";
 
 export const maxDuration = 60;
@@ -45,6 +46,7 @@ async function processMint(
 
   await pushEvents(mint, curr.symbol, curr.at, found);
   await putSnapshot(curr);
+  await pushHistory(curr);
 
   try {
     await notifyWatchers(mint, curr.symbol, found);

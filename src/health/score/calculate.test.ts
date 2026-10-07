@@ -81,7 +81,7 @@ describe("calculateHealth", () => {
   it("calculates a deterministic Health score from market and identity observations", () => {
     const result = calculateHealth(market, identity);
 
-    expect(result.score.version).toBe("health-v0.2.0");
+    expect(result.score.version).toBe("health-v0.3.0");
     expect(result.score.score).not.toBeNull();
     expect(result.score.score).toBeGreaterThanOrEqual(0);
     expect(result.score.score).toBeLessThanOrEqual(10);

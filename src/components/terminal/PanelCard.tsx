@@ -1,5 +1,10 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import type { ScanSuccess } from "@/lib/types/scan";
 import { buildPanel } from "@/health/score/panel";
+import { holderTrendFactor } from "@/health/factors/trend";
+import type { TrendResult } from "@/lib/watch/trend";
 
 type Data = ScanSuccess["data"];
 
@@ -36,8 +41,27 @@ function Tile({
 }
 
 export function PanelCard({ d }: { d: Data }) {
+  const mint = d.market.mint;
+  const [found, setFound] = useState<{ mint: string; holders: TrendResult | null } | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch(`/api/token-trend?mint=${encodeURIComponent(mint)}`, { cache: "no-store" })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((j: { holders?: TrendResult | null } | null) => {
+        if (!cancelled) setFound({ mint, holders: j?.holders ?? null });
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [mint]);
+
+  const trend = found?.mint === mint ? found.holders : null;
+
   const p = buildPanel({
     factors: d.factors,
+    extraFactors: trend ? [holderTrendFactor(trend)] : [],
     caps: d.health.caps ?? [],
     coverage: d.health.coverage,
     missingCritical: d.health.missingCritical,

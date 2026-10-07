@@ -27,6 +27,8 @@ const SAFETY_KEYS = new Set([
   "holders_top",
   "holders_top10",
   "holders_insiders",
+  "flow_wash_volume",
+  "flow_wash_txns",
 ]);
 
 // Is the tape in good shape? Price action, flow, turnover, holder base, age.
@@ -44,6 +46,7 @@ const SETUP_KEYS = new Set([
   "liquidity_turnover",
   "liquidity_impact",
   "holders_count",
+  "holders_trend",
   "lifecycle_token_age",
   "lifecycle_pair_age",
 ]);
@@ -112,11 +115,13 @@ function verdictFor(
 
 export function buildPanel(input: {
   factors: HealthFactor[];
+  extraFactors?: HealthFactor[];
   caps: HealthCap[];
   coverage: number;
   missingCritical: boolean;
 }): Panel {
-  const { factors, caps } = input;
+  const factors = [...input.factors, ...(input.extraFactors ?? [])];
+  const { caps } = input;
 
   const s = bucket(factors, SAFETY_KEYS);
   const t = bucket(factors, SETUP_KEYS);
