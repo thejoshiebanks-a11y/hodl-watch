@@ -54,6 +54,8 @@ export const ALERT_CATALOG: AlertDef[] = [
   { kind: "TOP_HOLDER_UP", label: "Top holder grows", category: "holders", defaultOn: true, threshold: t("points", 0.5, 20, 0.5, 2) },
   { kind: "HOLDERS_DROP", label: "Holder count falls", category: "holders", defaultOn: true, threshold: t("%", 1, 50, 1, 5) },
   { kind: "INSIDERS_UP", label: "Insider supply grows", category: "holders", defaultOn: true, threshold: t("points", 1, 30, 1, 3) },
+  { kind: "WHALE_BUY", label: "Whale buys", category: "holders", defaultOn: true, threshold: t("% of liquidity", 1, 50, 0.5, 5) },
+  { kind: "WHALE_SELL", label: "Whale sells", category: "holders", defaultOn: true, threshold: t("% of liquidity", 1, 50, 0.5, 5) },
 
   { kind: "HEALTH_DROP", label: "Health score falls", category: "health", defaultOn: true, threshold: t("points", 0.5, 5, 0.5, 1) },
   { kind: "HEALTH_RISE", label: "Health score rises", category: "health", defaultOn: false, threshold: t("points", 0.5, 5, 0.5, 1) },

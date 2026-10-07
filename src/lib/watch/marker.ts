@@ -28,6 +28,8 @@ const LOOKS: Record<string, Look> = {
   INSIDERS_UP: { text: "Insiders", shape: "arrowDown", sign: "+", unit: "pt" },
   HEALTH_DROP: { text: "Health", shape: "arrowDown", sign: "−", unit: "" },
   HEALTH_RISE: { text: "Health", shape: "arrowUp", sign: "+", unit: "" },
+  WHALE_BUY: { text: "Whale buy", shape: "arrowUp", unit: "% liq" },
+  WHALE_SELL: { text: "Whale sell", shape: "arrowDown", unit: "% liq" },
 };
 
 export function markerFor(e: MarkerEvent): {
