@@ -6,11 +6,17 @@ import {
   ColorType,
   HistogramSeries,
   createChart,
+  createSeriesMarkers,
   type IChartApi,
   type ISeriesApi,
+  type ISeriesMarkersPluginApi,
+  type SeriesMarker,
+  type Time,
   type UTCTimestamp,
 } from "lightweight-charts";
 import type { Candle } from "@/lib/types/chart";
+import { getDeviceId } from "@/lib/watch/device";
+import { markerFor, snapTime } from "@/lib/watch/marker";
 
 const TIMEFRAMES = ["1m", "5m", "15m", "1h", "4h", "all"] as const;
 type Timeframe = (typeof TIMEFRAMES)[number];
@@ -18,19 +24,72 @@ type Timeframe = (typeof TIMEFRAMES)[number];
 const UP = "#2dd4bf";
 const DOWN = "#fb7185";
 
+type ChartEvent = {
+  id: string;
+  at: string;
+  kind: string;
+  severity: "critical" | "warning" | "info";
+  title: string;
+  detail: string;
+  value?: number;
+};
+
+const SEVERITY_COLOR = {
+  critical: "#fb7185",
+  warning: "#fbbf24",
+  info: "#38d6ff",
+} as const;
+
 function precisionFor(price: number): number {
   if (!Number.isFinite(price) || price <= 0) return 6;
   return price >= 1 ? 2 : Math.min(10, Math.ceil(-Math.log10(price)) + 3);
 }
 
-export function PriceChart({ pool }: { pool: string | null }) {
+function ago(iso: string): string {
+  const s = Math.max(0, Math.floor((Date.now() - Date.parse(iso)) / 1000));
+  if (s < 90) return "just now";
+  const m = Math.floor(s / 60);
+  if (m < 60) return `${m}m ago`;
+  const h = Math.floor(m / 60);
+  if (h < 48) return `${h}h ago`;
+  return `${Math.floor(h / 24)}d ago`;
+}
+
+function drawMarkers(
+  plugin: ISeriesMarkersPluginApi<Time> | null,
+  events: ChartEvent[],
+  times: number[],
+) {
+  if (!plugin) return;
+  const markers: SeriesMarker<Time>[] = [];
+  for (const e of events) {
+    const t = snapTime(times, Math.floor(Date.parse(e.at) / 1000));
+    if (t === null) continue;
+    const m = markerFor(e);
+    markers.push({
+      time: t as UTCTimestamp,
+      position: m.position,
+      shape: m.shape,
+      color: SEVERITY_COLOR[e.severity],
+      text: m.text,
+    });
+  }
+  markers.sort((a, b) => (a.time as number) - (b.time as number));
+  plugin.setMarkers(markers);
+}
+
+export function PriceChart({ pool, mint }: { pool: string | null; mint?: string | null }) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const chartRef = useRef<IChartApi | null>(null);
   const candleRef = useRef<ISeriesApi<"Candlestick"> | null>(null);
   const volumeRef = useRef<ISeriesApi<"Histogram"> | null>(null);
+  const markersRef = useRef<ISeriesMarkersPluginApi<Time> | null>(null);
+  const timesRef = useRef<number[]>([]);
+  const eventsRef = useRef<ChartEvent[]>([]);
 
   const [timeframe, setTimeframe] = useState<Timeframe>("1m");
   const [hasData, setHasData] = useState(false);
+  const [events, setEvents] = useState<ChartEvent[]>([]);
   const [result, setResult] = useState<{
     key: string;
     status: "ready" | "error";
@@ -78,12 +137,14 @@ export function PriceChart({ pool }: { pool: string | null }) {
     chartRef.current = chart;
     candleRef.current = candles;
     volumeRef.current = volume;
+    markersRef.current = createSeriesMarkers(candles, []);
 
     return () => {
       chart.remove();
       chartRef.current = null;
       candleRef.current = null;
       volumeRef.current = null;
+      markersRef.current = null;
     };
   }, []);
 
@@ -127,6 +188,9 @@ export function PriceChart({ pool }: { pool: string | null }) {
           })),
         );
 
+        timesRef.current = body.candles.map((c) => c.time as number);
+        drawMarkers(markersRef.current, eventsRef.current, timesRef.current);
+
         if (first) {
           chartRef.current?.timeScale().fitContent();
           first = false;
@@ -151,6 +215,36 @@ export function PriceChart({ pool }: { pool: string | null }) {
       clearInterval(id);
     };
   }, [pool, timeframe, key]);
+
+  useEffect(() => {
+    if (!mint) return;
+    let cancelled = false;
+
+    async function loadEvents() {
+      try {
+        const device = getDeviceId();
+        const res = await fetch(`/api/token-events?mint=${encodeURIComponent(mint ?? "")}`, {
+          cache: "no-store",
+          headers: device ? { "x-device-id": device } : undefined,
+        });
+        if (!res.ok) return;
+        const body = (await res.json()) as { events: ChartEvent[] };
+        if (cancelled) return;
+        eventsRef.current = body.events;
+        setEvents(body.events);
+        drawMarkers(markersRef.current, body.events, timesRef.current);
+      } catch {
+        // Markers are a bonus; the chart works without them.
+      }
+    }
+
+    loadEvents();
+    const id = setInterval(loadEvents, 60000);
+    return () => {
+      cancelled = true;
+      clearInterval(id);
+    };
+  }, [mint]);
 
   if (!pool) return null;
 
@@ -188,6 +282,31 @@ export function PriceChart({ pool }: { pool: string | null }) {
           </span>
         )}
       </div>
+
+      {mint && events.length > 0 && (
+        <div className="hodl-card p-4">
+          <p className="text-[10px] uppercase tracking-[0.18em] text-hodl-muted">
+            Changes marked on the chart
+          </p>
+          <ul className="mt-3 space-y-3">
+            {events.slice(0, 6).map((e) => (
+              <li key={e.id} className="flex gap-3">
+                <span
+                  className="mt-1.5 h-2 w-2 shrink-0 rounded-full"
+                  style={{ background: SEVERITY_COLOR[e.severity] }}
+                />
+                <div className="min-w-0">
+                  <p className="text-sm">
+                    {e.title}{" "}
+                    <span className="text-[11px] text-hodl-muted">{ago(e.at)}</span>
+                  </p>
+                  <p className="text-xs text-hodl-muted">{e.detail}</p>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
     </div>
   );
 }
