@@ -56,6 +56,7 @@ export const CHECKS: CheckInfo[] = [
 ];
 
 export const VERSION_HISTORY: { version: string; notes: string }[] = [
+  { version: "health-v0.3.0", notes: "Added wash-trading checks, a holder-count trend and RugCheck risk flags. Tape is now direction-aware and age penalties are softer. Young pools use 5-minute (and 1-minute under 2 hours) candles so market checks are not blank. Fresh launches are not treated as drained pools, and pump.fun bonding-curve tokens use curve reserves. A held 24h fall gets a higher ceiling, and higher again when price has steadied. Early-token ceilings are explained in the UI." },
   { version: "health-v0.2.0", notes: "Added score caps. A serious red flag now sets a ceiling the score cannot exceed, whatever the average says. Missing security or liquidity data and thin coverage also cap the score. Caps are provisional and are shown next to the score." },
   { version: "health-v0.1.2", notes: "Seven domains and 26 checks. Flow falls back to a 6-hour window when the last hour is too thin. Holder checks exclude known pools. Results are labelled Partial when coverage is low or Liquidity or Security was not observed." },
   { version: "health-v0.1.1", notes: "Added buy/sell flow from transaction counts, with N/A below 20 trades." },
