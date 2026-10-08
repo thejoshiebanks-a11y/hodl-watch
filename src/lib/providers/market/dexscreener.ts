@@ -192,8 +192,9 @@ async function getDexScreenerRaw(
     name: pair.baseToken.name ?? null,
 
     priceUsd: Number.isFinite(priceUsd ?? NaN) ? priceUsd : null,
-    marketCapUsd: pair.marketCap ?? null,
-    fdvUsd: pair.fdv ?? null,
+    // Wrapped SOL's supply is not SOL's circulating supply, so its cap and FDV would be wrong.
+    marketCapUsd: mint === "So11111111111111111111111111111111111111112" ? null : (pair.marketCap ?? null),
+    fdvUsd: mint === "So11111111111111111111111111111111111111112" ? null : (pair.fdv ?? null),
 
     liquidityUsd: pair.liquidity?.usd ?? null,
     liquidityBase: pair.liquidity?.base ?? null,

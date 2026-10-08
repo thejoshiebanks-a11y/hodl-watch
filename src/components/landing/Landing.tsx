@@ -162,7 +162,7 @@ function FeaturedRow({ mint, onScan }: { mint: string; onScan: (m: string) => vo
         if ("data" in j) {
           setD(j.data);
           // Remember the last good market cap so a provider gap does not blank the card.
-          const key = `hodl:mc:${mint}`;
+          const key = `hodl:mc2:${mint}`;
           const mc = j.data.market.marketCapUsd;
           try {
             if (typeof mc === "number" && Number.isFinite(mc) && mc > 0) {

@@ -9,3 +9,4 @@
 - X alerts only cover the tracked accounts, and symbol-only matches are unconfirmed because symbols are not unique.
 - No accounts. A watchlist lives on the device (or a linked group of devices). Clearing browser storage loses it unless another device is linked.
 - Push needs a supported browser, and on iPhone the app on the Home Screen.
+- Market cap for SOL itself is shown as N/A. DexScreener reports it from the wrapped token's supply, not SOL's circulating supply.
