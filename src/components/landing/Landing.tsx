@@ -407,7 +407,7 @@ export function Landing({
                 Smarter Scans.
                 <br />
                 <span className="bg-gradient-to-r from-hodl-cyan via-hodl-blue to-violet-400 bg-clip-text text-transparent">
-                  Better Plays.
+                  Clearer Evidence.
                 </span>
               </h1>
               <p className="mt-2.5 max-w-[185px] text-[13.5px] leading-snug text-slate-300/85">

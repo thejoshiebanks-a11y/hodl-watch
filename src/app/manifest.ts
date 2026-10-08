@@ -4,7 +4,7 @@ export default function manifest(): MetadataRoute.Manifest {
   return {
     name: "HODL",
     short_name: "HODL",
-    description: "Real-time Solana token intelligence.",
+    description: "Explainable Solana token monitoring.",
     start_url: "/",
     display: "standalone",
     background_color: "#050b24",

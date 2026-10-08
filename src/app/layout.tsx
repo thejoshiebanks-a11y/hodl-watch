@@ -17,6 +17,19 @@ export const metadata: Metadata = {
   metadataBase: new URL(siteUrl()),
   title: "HODL | Solana token intelligence",
   description: "Scan any Solana token for an explainable Health score, a live chart and the evidence behind it.",
+  openGraph: {
+    type: "website",
+    siteName: "HODL",
+    title: "HODL | Solana token intelligence",
+    description: "Scan any Solana token for an explainable Health score, a live chart and the evidence behind it.",
+    images: [{ url: "/og.png", width: 1280, height: 640, alt: "HODL. You trade. HODL watches." }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "HODL | Solana token intelligence",
+    description: "Scan any Solana token for an explainable Health score, a live chart and the evidence behind it.",
+    images: ["/og.png"],
+  },
   appleWebApp: { capable: true, title: "HODL", statusBarStyle: "black" },
   icons: { apple: "/pwa-icon?s=180" },
 };

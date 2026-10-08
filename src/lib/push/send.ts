@@ -27,7 +27,7 @@ function init(): boolean {
   const priv = process.env.VAPID_PRIVATE_KEY;
   if (!pub || !priv) return false;
   webpush.setVapidDetails(
-    process.env.VAPID_SUBJECT ?? "https://hodl-watch-rho.vercel.app",
+    process.env.VAPID_SUBJECT ?? "https://hodlterminal.vercel.app",
     pub,
     priv,
   );

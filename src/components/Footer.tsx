@@ -32,7 +32,7 @@ export function Footer() {
             HODL
           </p>
           <p className="mt-2 text-xs leading-relaxed text-hodl-muted">
-            You trade. HODL watches. Real-time Solana token intelligence.
+            You trade. HODL watches. Explainable Solana token monitoring.
           </p>
         </div>
 
