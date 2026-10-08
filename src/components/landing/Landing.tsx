@@ -146,6 +146,7 @@ function Spark({ pool }: { pool: string | null }) {
 function FeaturedRow({ mint, onScan }: { mint: string; onScan: (m: string) => void }) {
   const [d, setD] = useState<Data | null>(null);
   const [failed, setFailed] = useState(false);
+  const [lastMc, setLastMc] = useState<number | null>(null);
 
   useEffect(() => {
     let off = false;
@@ -158,8 +159,22 @@ function FeaturedRow({ mint, onScan }: { mint: string; onScan: (m: string) => vo
         });
         const j: ScanResponse = await r.json();
         if (off) return;
-        if ("data" in j) setD(j.data);
-        else setFailed(true);
+        if ("data" in j) {
+          setD(j.data);
+          // Remember the last good market cap so a provider gap does not blank the card.
+          const key = `hodl:mc:${mint}`;
+          const mc = j.data.market.marketCapUsd;
+          try {
+            if (typeof mc === "number" && Number.isFinite(mc) && mc > 0) {
+              localStorage.setItem(key, JSON.stringify({ v: mc, at: Date.now() }));
+            } else {
+              const raw = JSON.parse(localStorage.getItem(key) ?? "null");
+              if (raw && typeof raw.v === "number" && Date.now() - raw.at < 86_400_000) setLastMc(raw.v);
+            }
+          } catch {
+            /* storage unavailable */
+          }
+        } else setFailed(true);
       } catch {
         if (!off) setFailed(true);
       }
@@ -173,6 +188,7 @@ function FeaturedRow({ mint, onScan }: { mint: string; onScan: (m: string) => vo
   if (!d) return <div className="h-[92px] animate-pulse rounded-2xl border border-white/5 bg-white/[0.03]" />;
 
   const m = d.market;
+  const stale = m.marketCapUsd === null && lastMc !== null;
   const partial = d.health.partial || d.health.missingCritical;
   const isSol = m.symbol === "SOL";
   const price = m.priceUsd === null ? "N/A" : m.priceUsd < 1 ? m.priceUsd.toPrecision(4) : m.priceUsd.toFixed(2);
@@ -197,7 +213,7 @@ function FeaturedRow({ mint, onScan }: { mint: string; onScan: (m: string) => vo
       </div>
       <div className="min-w-0 border-l border-white/10 pl-2.5">
         <Spark pool={m.pairAddress} />
-        <p className="mt-1 whitespace-nowrap text-[10px] text-hodl-muted">MC <span className="ml-1 font-bold text-slate-100">{usd(m.marketCapUsd)}</span></p>
+        <p className="mt-1 whitespace-nowrap text-[10px] text-hodl-muted">MC <span className="ml-1 font-bold text-slate-100">{usd(stale ? lastMc : m.marketCapUsd)}</span>{stale && <span className="ml-1 text-[9px]">last</span>}</p>
         <p className="whitespace-nowrap text-[10px] text-hodl-muted">VOL <span className="ml-1 font-bold text-slate-100">{usd(m.periods.h24.volumeUsd)}</span></p>
       </div>
     </button>
