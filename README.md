@@ -1,36 +1,44 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# HODL
 
-## Getting Started
+Health · Observe · Detect · Live
 
-First, run the development server:
+Paste a Solana token address. HODL scores its current market health from 0 to 10, shows the evidence behind the score, and can watch the token and ping you when something material changes.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+HODL watches. The user decides. It never connects a wallet, swaps, or tells you what to buy or sell.
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## What it does
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+- Scan: Health score with factor breakdown, caps and explanation, plus live chart and identity facts.
+- Watch: a per-device watchlist with scheduled re-scans, alert rules and web push.
+- Your Mark: save a token's price and Health, then see what changed.
+- Posted CA: whether the token's linked X account posted its address.
+- Share: public pages at /t/<mint> with a preview card.
+- Device linking: share one watchlist across browsers with a one-time code.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Run it
 
-## Learn More
+    npm install
+    cp .env.example .env.local   # fill in the values
+    npm run dev
 
-To learn more about Next.js, take a look at the following resources:
+Checks before a commit:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+    npx tsc --noEmit && npm run lint && npx vitest run
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Environment
 
-## Deploy on Vercel
+Names are listed in .env.example. Values stay in Vercel and .env.local and are never committed.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Docs
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- docs/architecture.md
+- docs/data-sources.md
+- docs/events.md
+- docs/detection.md
+- docs/limitations.md
+- docs/health.md
+- SECURITY.md
+
+## Deploy
+
+Vercel, with a cron job calling /api/cron/scan.
