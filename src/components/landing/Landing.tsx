@@ -401,7 +401,7 @@ export function Landing({
               <path d="M0 44L40 43L80 42L120 40L160 39L195 36L225 37L250 32L268 35L285 30L300 33L318 31L335 34L352 27L370 32L385 29L400 33" fill="none" stroke="url(#rf-line)" strokeWidth="1" strokeLinejoin="round" vectorEffect="non-scaling-stroke" />
               <path d="M285 30L291 52M352 27L346 54M250 32L244 54M318 31L322 52M385 29L380 50" stroke="#38d6ff" strokeOpacity=".14" strokeWidth=".7" vectorEffect="non-scaling-stroke" />
             </svg>
-            <div className="relative z-10">
+            <div className="relative z-10 pb-12">
               <p className="text-[11px] font-bold uppercase tracking-[0.3em] text-hodl-muted">Token Surveillance</p>
               <h1 className="mt-3 text-[clamp(21px,6.2vw,25px)] font-black uppercase leading-[1.08] tracking-[0.06em]">
                 {["Health", "Observe", "Detect", "Live"].map((w) => (
