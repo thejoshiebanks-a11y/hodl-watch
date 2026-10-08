@@ -413,7 +413,7 @@ export function Landing({
                   </span>
                 ))}
               </h1>
-              <p className="mt-2.5 max-w-[185px] text-[13.5px] leading-snug text-slate-300/85">
+              <p className="mt-6 max-w-[340px] text-[13.5px] leading-snug text-slate-300/85">
                 Paste a token CA and get an explainable Health score, live data and alerts in one place.
               </p>
             </div>
