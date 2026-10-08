@@ -372,36 +372,7 @@ export function Landing({
             <div className="pointer-events-none absolute -top-3 right-0 z-0 w-[150px]">
               <HeroGlobe />
             </div>
-            <svg
-              aria-hidden
-              viewBox="0 0 400 60"
-              preserveAspectRatio="none"
-              className="pointer-events-none absolute -left-4 -bottom-2 z-[1] h-14 w-[calc(100%+2rem)]"
-            >
-              <defs>
-                <linearGradient id="rf-fill" x1="0" y1="0" x2="0" y2="1">
-                  <stop stopColor="#1f3047" /><stop offset=".45" stopColor="#0a111b" /><stop offset="1" stopColor="#03050a" stopOpacity="0" />
-                </linearGradient>
-                <linearGradient id="rf-line" x1="0" y1="0" x2="1" y2="0">
-                  <stop stopColor="#38d6ff" stopOpacity="0" />
-                  <stop offset=".35" stopColor="#38d6ff" stopOpacity=".2" />
-                  <stop offset=".7" stopColor="#38d6ff" stopOpacity=".7" />
-                  <stop offset="1" stopColor="#38d6ff" stopOpacity=".7" />
-                </linearGradient>
-                <linearGradient id="rf-mask-g" x1="0" y1="0" x2="1" y2="0">
-                  <stop stopColor="#fff" stopOpacity="0" />
-                  <stop offset=".4" stopColor="#fff" stopOpacity=".35" />
-                  <stop offset=".72" stopColor="#fff" stopOpacity="1" />
-                </linearGradient>
-                <mask id="rf-mask">
-                  <rect width="400" height="60" fill="url(#rf-mask-g)" />
-                </mask>
-              </defs>
-              <path d="M0 44L40 43L80 42L120 40L160 39L195 36L225 37L250 32L268 35L285 30L300 33L318 31L335 34L352 27L370 32L385 29L400 33V60H0Z" fill="url(#rf-fill)" mask="url(#rf-mask)" />
-              <path d="M0 44L40 43L80 42L120 40L160 39L195 36L225 37L250 32L268 35L285 30L300 33L318 31L335 34L352 27L370 32L385 29L400 33" fill="none" stroke="url(#rf-line)" strokeWidth="1" strokeLinejoin="round" vectorEffect="non-scaling-stroke" />
-              <path d="M285 30L291 52M352 27L346 54M250 32L244 54M318 31L322 52M385 29L380 50" stroke="#38d6ff" strokeOpacity=".14" strokeWidth=".7" vectorEffect="non-scaling-stroke" />
-            </svg>
-            <div className="relative z-10 pb-12">
+            <div className="relative z-10">
               <p className="text-[11px] font-bold uppercase tracking-[0.3em] text-hodl-muted">Token Surveillance</p>
               <h1 className="mt-3 text-[clamp(21px,6.2vw,25px)] font-black uppercase leading-[1.08] tracking-[0.06em]">
                 {["Health", "Observe", "Detect", "Live"].map((w) => (
