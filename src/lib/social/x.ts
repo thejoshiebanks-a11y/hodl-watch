@@ -141,11 +141,11 @@ export function parseSearch(json: unknown): { posts: XPost[]; newestId: string |
 
 export async function searchRecent(
   query: string,
-  o: { bearer: string; sinceId?: string | null; startTime?: string; fetchImpl?: typeof fetch },
+  o: { bearer: string; sinceId?: string | null; startTime?: string; maxResults?: number; fetchImpl?: typeof fetch },
 ): Promise<{ posts: XPost[]; newestId: string | null }> {
   const params = new URLSearchParams({
     query,
-    max_results: "100",
+    max_results: String(Math.min(100, Math.max(10, o.maxResults ?? 100))),
     "tweet.fields": "created_at,author_id,entities",
     expansions: "author_id",
     "user.fields": "username,name",

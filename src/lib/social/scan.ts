@@ -19,7 +19,8 @@ import {
 const THROTTLE_SECONDS = 240; // at most one check every 4 minutes
 const FIRST_WINDOW_MS = 15 * 60_000; // how far back the very first check looks
 const MAX_POST_AGE_MS = 60 * 60_000; // older posts never alert
-const MAX_POSTS_PER_DAY = 300; // spending guard: about $1.50 a day at $0.005 per post
+const MAX_POSTS_PER_DAY = 30; // spending cap: $0.15 a day at $0.005 per post
+const MIN_REQUEST = 10; // X returns at least 10 per search, so stop when less than that is left
 const ACCOUNT_COOLDOWN_SECONDS = 30 * 60; // same account + same token: once per 30 minutes
 const MAX_TOKENS = 200;
 
@@ -71,7 +72,7 @@ export async function scanXPosts(deadlineAt: number): Promise<XScanResult> {
 
   const dayKey = `x:reads:${new Date().toISOString().slice(0, 10)}`;
   let used = Number((await redis.get(dayKey)) ?? 0);
-  if (used >= MAX_POSTS_PER_DAY) return { ok: true, reason: "daily_cap" };
+  if (MAX_POSTS_PER_DAY - used < MIN_REQUEST) return { ok: true, reason: "daily_cap" };
 
   const snaps = await redis.mget<(WatchSnapshot | null)[]>(...mints.map((m) => `snap:${m}`));
   const tokens: TrackedToken[] = mints.map((mint, i) => ({ mint, symbol: snaps[i]?.symbol ?? null }));
@@ -88,12 +89,13 @@ export async function scanXPosts(deadlineAt: number): Promise<XScanResult> {
   let failed: string | null = null;
   let i = 0;
 
-  while (i < queries.length && Date.now() < deadlineAt && used < MAX_POSTS_PER_DAY) {
+  while (i < queries.length && Date.now() < deadlineAt && MAX_POSTS_PER_DAY - used >= MIN_REQUEST) {
     try {
       const res = await searchRecent(queries[i], {
         bearer,
         sinceId,
         startTime: sinceId ? undefined : startTime,
+        maxResults: MAX_POSTS_PER_DAY - used,
       });
       for (const p of res.posts) {
         posts.set(p.id, p);
