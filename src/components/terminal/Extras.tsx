@@ -156,7 +156,7 @@ function MarkCard({ d }: { d: Data }) {
         </>
       )}
       <p className="mt-4 text-[11px] text-hodl-muted">
-        Saved on this device only. Live Watch rules and alerts arrive with v0.2.
+        Saved on this device only.
       </p>
     </section>
   );
@@ -249,7 +249,7 @@ function WatchToggle({ d }: { d: Data }) {
       <p className="text-[10px] uppercase tracking-[0.18em] text-hodl-muted">Watchlist</p>
       <p className="mt-3 text-sm text-hodl-muted">
         {watching
-          ? "This token is on your watchlist. Scheduled re-scans and alerts are coming in the next steps."
+          ? "This token is on your watchlist. HODL re-scans it on a schedule and alerts you when something material changes, if alerts are on."
           : "Add this token to your watchlist to keep it one tap away."}
       </p>
       <button
