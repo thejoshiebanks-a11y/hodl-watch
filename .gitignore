@@ -42,3 +42,7 @@ next-env.d.ts
 
 # keep the names-only template
 !.env.example
+
+# local scratch
+health-code.txt
+identity-code.txt
