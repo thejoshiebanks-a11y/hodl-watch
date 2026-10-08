@@ -74,11 +74,48 @@ function saveMarks(marks: Mark[]) {
   }
 }
 
+function markHeaders(): Record<string, string> | null {
+  const id = getDeviceId();
+  return id ? { "content-type": "application/json", "x-device-id": id } : null;
+}
+
+/** Keeps the server copy of the mark in step. Never blocks the UI. */
+function syncMark(method: "PUT" | "DELETE", body: object) {
+  const headers = markHeaders();
+  if (!headers) return;
+  fetch("/api/mark", { method, headers, body: JSON.stringify(body) }).catch(() => undefined);
+}
+
 function MarkCard({ d }: { d: Data }) {
   const mint = d.market.mint;
   const [mark, setMark] = useState<Mark | null>(
     () => loadMarks().find((x) => x.mint === mint) ?? null,
   );
+
+  useEffect(() => {
+    let off = false;
+    const headers = markHeaders();
+    if (headers) {
+      fetch(`/api/mark?mint=${encodeURIComponent(mint)}`, { headers })
+        .then((r) => (r.ok ? r.json() : null))
+        .then((j: { mark?: Mark | null } | null) => {
+          if (off) return;
+          if (j?.mark) {
+            // A linked device already has a mark for this token.
+            saveMarks([...loadMarks().filter((x) => x.mint !== mint), j.mark]);
+            setMark(j.mark);
+          } else {
+            // Upload a mark that so far only lives on this device.
+            const local = loadMarks().find((x) => x.mint === mint);
+            if (local) syncMark("PUT", local);
+          }
+        })
+        .catch(() => undefined);
+    }
+    return () => {
+      off = true;
+    };
+  }, [mint]);
 
   function set() {
     const next: Mark = {
@@ -90,11 +127,13 @@ function MarkCard({ d }: { d: Data }) {
     };
     saveMarks([...loadMarks().filter((x) => x.mint !== mint), next]);
     setMark(next);
+    syncMark("PUT", next);
   }
 
   function clear() {
     saveMarks(loadMarks().filter((x) => x.mint !== mint));
     setMark(null);
+    syncMark("DELETE", { mint });
   }
 
   const now = d.market.priceUsd;
@@ -156,7 +195,7 @@ function MarkCard({ d }: { d: Data }) {
         </>
       )}
       <p className="mt-4 text-[11px] text-hodl-muted">
-        Saved on this device only.
+        Synced to your linked devices. Turn on the mark alerts in the Alerts card to get pinged.
       </p>
     </section>
   );

@@ -3,6 +3,7 @@ import type { WatchEvent } from "@/lib/watch/detect";
 import type { WatchEntry } from "@/lib/watch/types";
 import { getSettings, getTokenRules } from "@/lib/watch/settings";
 import { mergeRules } from "@/lib/watch/alert-catalog";
+import { markDevicesAmong, markEventsFor } from "@/lib/watch/mark";
 import { wantsPush } from "@/lib/watch/alert-filter";
 import { SUB_DEVICES, sendPush } from "./send";
 
@@ -14,12 +15,15 @@ export async function notifyWatchers(
   mint: string,
   symbol: string | null,
   events: WatchEvent[],
+  priceUsd: number | null = null,
 ): Promise<{ watchers: number; pushed: number }> {
-  if (events.length === 0) return { watchers: 0, pushed: 0 };
+  if (events.length === 0 && priceUsd === null) return { watchers: 0, pushed: 0 };
   const sorted = [...events].sort((a, b) => RANK[a.severity] - RANK[b.severity]);
 
   const redis = getRedis();
-  const devices = await redis.smembers(`watchers:${mint}`);
+  const watchers = await redis.smembers(`watchers:${mint}`);
+  // With no scan events, only devices that have a mark on this token can have something to hear.
+  const devices = events.length === 0 ? await markDevicesAmong(mint, watchers) : watchers;
   let pushed = 0;
 
   for (const device of devices) {
@@ -35,7 +39,11 @@ export async function notifyWatchers(
       getTokenRules(device, mint),
     ]);
     const settings = { ...base, rules: mergeRules(base.rules, override) };
-    const wanted = sorted.filter((e) => wantsPush(e, settings));
+    const markEvents =
+      priceUsd === null ? [] : await markEventsFor(device, mint, priceUsd, settings.rules);
+    const wanted = [...sorted, ...markEvents]
+      .sort((a, b) => RANK[a.severity] - RANK[b.severity])
+      .filter((e) => wantsPush(e, settings));
     if (wanted.length === 0) continue;
 
     const fresh: WatchEvent[] = [];

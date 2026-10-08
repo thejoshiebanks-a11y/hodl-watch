@@ -54,7 +54,7 @@ async function processMint(
   await pushHistory(curr);
 
   try {
-    await notifyWatchers(mint, curr.symbol, found);
+    await notifyWatchers(mint, curr.symbol, found, curr.priceUsd ?? null);
   } catch (e) {
     console.error("cron: notify failed for", mint, e);
   }

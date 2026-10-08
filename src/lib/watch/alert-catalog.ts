@@ -50,6 +50,8 @@ export const ALERT_CATALOG: AlertDef[] = [
   { kind: "VOLUME_SPIKE", label: "Volume spike", category: "market", defaultOn: false, threshold: t("x normal", 2, 50, 1, 5) },
   { kind: "FLOW_SELL_LED", label: "Flow turns sell-led", category: "market", defaultOn: true },
   { kind: "FLOW_BUY_LED", label: "Flow turns buy-led", category: "market", defaultOn: false },
+  { kind: "MARK_BELOW", label: "Price falls below my mark", category: "market", defaultOn: true, threshold: t("%", 5, 90, 1, 20) },
+  { kind: "MARK_ABOVE", label: "Price rises above my mark", category: "market", defaultOn: false, threshold: t("%", 5, 500, 1, 20) },
 
   { kind: "CREATOR_SOLD", label: "Creator balance falls", category: "holders", defaultOn: true, threshold: t("% sold", 5, 100, 5, 10) },
   { kind: "TOP_HOLDER_UP", label: "Top holder grows", category: "holders", defaultOn: true, threshold: t("points", 0.5, 20, 0.5, 2) },
