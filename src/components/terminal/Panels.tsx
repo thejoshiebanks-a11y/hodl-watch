@@ -1,5 +1,7 @@
 "use client";
 
+import { PostedCaRow } from "./PostedCaRow";
+
 import { useState, type ReactNode } from "react";
 import type { ScanSuccess } from "@/lib/types/scan";
 import { summarizeHealthGroups } from "@/health/score/groups";
@@ -217,6 +219,7 @@ export function DetailTabs({
           </div>
         ))}
       </dl>
+      {tab === "RISK" && <PostedCaRow key={d.market.mint} mint={d.market.mint} />}
     </section>
   );
 }
