@@ -32,6 +32,7 @@ const LOOKS: Record<string, Look> = {
   WHALE_SELL: { text: "Whale sell", shape: "arrowDown", unit: "% liq" },
   X_POST: { text: "X post", shape: "circle" },
   X_POST_POSSIBLE: { text: "X post?", shape: "circle" },
+  CA_POSTED: { text: "CA posted", shape: "circle" },
 };
 
 export function markerFor(e: MarkerEvent): {

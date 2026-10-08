@@ -1,7 +1,8 @@
 // "Posted CA": did the token's own linked X account post its contract address?
 import { getRedis } from "@/lib/watch/redis";
 import { MAX_POSTS_PER_DAY } from "./scan";
-import { findPost, xHandleFrom, type PostedCa } from "./posted-match";
+import type { WatchEvent } from "@/lib/watch/detect";
+import { decidePosted, findPost, xHandleFrom, type PostedCa } from "./posted-match";
 import { postUrl, searchRecent } from "./x";
 
 const MIN_REQUEST = 10; // same rule as the alert scan: X returns up to 10 per search
@@ -52,4 +53,30 @@ export async function checkPostedCa(
     await redis.set(cacheKey, result, { ex: TTL_ERROR }).catch(() => undefined);
     return result;
   }
+}
+
+/** A CA_POSTED event when the token's own account has just posted its address. */
+export async function detectPostedCa(
+  mint: string,
+  socials: { handle?: string | null }[],
+): Promise<WatchEvent | null> {
+  const r = await checkPostedCa(mint, socials);
+  if (r.state === "UNKNOWN") return null;
+
+  const redis = getRedis();
+  const key = `postedca:base:${mint}`;
+  const raw = await redis.get<string>(key);
+  const base = raw === "YES" || raw === "NOT_SEEN" ? raw : null;
+  const d = decidePosted(base, r.state);
+  if (d.base && d.base !== base) await redis.set(key, d.base, { ex: 30 * 86_400 });
+  if (!d.fire || r.state !== "YES") return null;
+
+  return {
+    kind: "CA_POSTED",
+    severity: "info",
+    title: `@${r.handle} posted the contract address`,
+    detail: "The token's own linked X account posted this token's address.",
+    url: r.url,
+    key: "ca-posted",
+  };
 }

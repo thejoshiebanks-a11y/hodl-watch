@@ -9,6 +9,7 @@ import { updatePeak } from "@/lib/watch/peaks";
 import { pushHistory } from "@/lib/watch/history";
 import { syncWhaleWebhook } from "@/lib/whale/helius";
 import { scanXPosts } from "@/lib/social/scan";
+import { detectPostedCa } from "@/lib/social/posted";
 
 export const maxDuration = 60;
 export const dynamic = "force-dynamic";
@@ -44,6 +45,9 @@ async function processMint(
   const pool = outcome.data.market.pairAddress;
   if (pool) await getRedis().set(`pool:${mint}`, pool);
   const found = prev ? detectEvents(prev, curr) : [];
+  // Did the token's own X account just post its address? Never blocks the scan.
+  const posted = await detectPostedCa(mint, outcome.data.market.socials).catch(() => null);
+  if (posted) found.push(posted);
 
   await pushEvents(mint, curr.symbol, curr.at, found);
   await putSnapshot(curr);

@@ -62,7 +62,7 @@ export function clusterBubbles<T extends Ev>(
 }
 
 export function glyphFor(kind: string, side: Side): string {
-  if (kind.startsWith("X_POST")) return "𝕏";
+  if (kind.startsWith("X_POST") || kind === "CA_POSTED") return "𝕏";
   if (kind.startsWith("WHALE")) return "🐋";
   if (kind.startsWith("LIQUIDITY") || kind === "LP_LOCK_DROP" || kind === "POOL_COUNT") return "💧";
   if (

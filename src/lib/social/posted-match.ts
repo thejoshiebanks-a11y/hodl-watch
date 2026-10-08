@@ -15,6 +15,19 @@ const RESERVED = new Set([
   "settings", "messages", "notifications", "compose",
 ]);
 
+export type PostedBase = "YES" | "NOT_SEEN" | null;
+
+/** Fires only on the change from "not seen" to "yes". The first check just sets the baseline. */
+export function decidePosted(
+  base: PostedBase,
+  now: "YES" | "NOT_SEEN" | "UNKNOWN",
+): { fire: boolean; base: PostedBase } {
+  if (now === "UNKNOWN") return { fire: false, base };
+  if (base === null) return { fire: false, base: now };
+  if (base === "NOT_SEEN" && now === "YES") return { fire: true, base: "YES" };
+  return { fire: false, base };
+}
+
 /** The token's own X account, taken from its linked social URLs. */
 export function xHandleFrom(socials: { handle?: string | null }[]): string | null {
   for (const s of socials) {

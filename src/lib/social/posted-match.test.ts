@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { findPost, xHandleFrom } from "./posted-match";
+import { decidePosted, findPost, xHandleFrom } from "./posted-match";
 import type { XPost } from "./x";
 
 const MINT = "So11111111111111111111111111111111111111112";
@@ -34,5 +34,20 @@ describe("findPost", () => {
   });
   it("finds the mint inside a link", () => {
     expect(findPost([post("chart", { urls: [`https://dexscreener.com/solana/${MINT}`] })], "project", MINT)).not.toBeNull();
+  });
+});
+
+describe("decidePosted", () => {
+  it("sets a baseline on the first check without firing", () => {
+    expect(decidePosted(null, "YES")).toEqual({ fire: false, base: "YES" });
+    expect(decidePosted(null, "NOT_SEEN")).toEqual({ fire: false, base: "NOT_SEEN" });
+  });
+  it("fires once when not seen turns into yes", () => {
+    expect(decidePosted("NOT_SEEN", "YES")).toEqual({ fire: true, base: "YES" });
+    expect(decidePosted("YES", "YES").fire).toBe(false);
+  });
+  it("never fires on unknown and never goes back from yes", () => {
+    expect(decidePosted("NOT_SEEN", "UNKNOWN").fire).toBe(false);
+    expect(decidePosted("YES", "NOT_SEEN")).toEqual({ fire: false, base: "YES" });
   });
 });

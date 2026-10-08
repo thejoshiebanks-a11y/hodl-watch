@@ -63,6 +63,7 @@ export const ALERT_CATALOG: AlertDef[] = [
 
   { kind: "X_POST", label: "Tracked account posts this token's address", category: "social", defaultOn: true },
   { kind: "X_POST_POSSIBLE", label: "Tracked account posts its $symbol only (unconfirmed)", category: "social", defaultOn: false },
+  { kind: "CA_POSTED", label: "Token's own X account posts its address", category: "social", defaultOn: true },
 ];
 
 export type AlertRule = { on?: boolean; min?: number };
