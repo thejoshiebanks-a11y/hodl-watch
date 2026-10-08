@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import { siteUrl } from "@/lib/share";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -13,6 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(siteUrl()),
   title: "HODL | Solana token intelligence",
   description: "Scan any Solana token for an explainable Health score, a live chart and the evidence behind it.",
   appleWebApp: { capable: true, title: "HODL", statusBarStyle: "black" },

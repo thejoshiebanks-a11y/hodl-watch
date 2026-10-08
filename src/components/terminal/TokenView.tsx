@@ -11,6 +11,7 @@ import { PriceChart } from "@/components/PriceChart";
 import { DetailTabs } from "@/components/terminal/Panels";
 import { Evidence, Watch } from "@/components/terminal/Extras";
 import { HodlLogo, Icon, SolanaMark } from "@/components/terminal/Brand";
+import { ShareButton } from "@/components/terminal/ShareButton";
 
 type Data = ScanSuccess["data"];
 type Tone = "ok" | "mid" | "bad" | "na";
@@ -222,9 +223,12 @@ export function TokenView({ d, onBack }: { d: Data; onBack: () => void }) {
   return (
     <div className="pb-28">
       <header className="flex items-center justify-between">
-        <button type="button" onClick={onBack} aria-label="Back" className="p-2 text-2xl text-hodl-muted">
-          ‹
-        </button>
+        <div className="flex items-center">
+          <button type="button" onClick={onBack} aria-label="Back" className="p-2 text-2xl text-hodl-muted">
+            ‹
+          </button>
+          <ShareButton mint={m.mint} symbol={m.symbol} />
+        </div>
         <div className="flex items-center gap-2.5">
           <HodlLogo size={36} />
           <span className="bg-gradient-to-r from-white to-hodl-cyan bg-clip-text text-lg font-extrabold tracking-[0.2em] text-transparent">
