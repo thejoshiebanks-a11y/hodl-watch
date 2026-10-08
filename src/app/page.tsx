@@ -54,6 +54,18 @@ export default function Home() {
     }
   }
 
+  // Notifications open /?token=<mint>: scan that token straight away.
+  useEffect(() => {
+    const t = new URLSearchParams(window.location.search).get("token");
+    if (!t) return;
+    // Deferred so the scan's state updates don't run inside the effect body.
+    const id = setTimeout(() => {
+      window.history.replaceState(null, "", "/");
+      void scan(t);
+    }, 0);
+    return () => clearTimeout(id);
+  }, []);
+
   const openMint = snapshot?.market.mint;
   const fresh = snapshot?.health.caps?.some((c) => c.key === "fresh_launch") ?? false;
 

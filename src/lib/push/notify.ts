@@ -56,7 +56,7 @@ export async function notifyWatchers(
         more > 0
           ? `${top.detail} · +${more} more, tap to review`
           : top.detail,
-      url: "/",
+      url: `/?token=${encodeURIComponent(mint)}`,
       tag: `hodl-${mint}`,
     });
     if (result === "sent") pushed++;
