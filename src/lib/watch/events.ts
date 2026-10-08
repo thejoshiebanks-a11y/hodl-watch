@@ -30,7 +30,7 @@ export async function pushEvents(
   if (events.length === 0) return [];
   const stored: StoredEvent[] = events.map((e, i) => ({
     ...e,
-    id: `${at}-${i}-${e.kind}`,
+    id: e.key ? `${at}-${e.key}` : `${at}-${i}-${e.kind}`,
     mint,
     symbol,
     at,

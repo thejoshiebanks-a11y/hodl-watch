@@ -29,6 +29,7 @@ const UP = "#2dd4bf";
 const DOWN = "#fb7185";
 
 type ChartEvent = {
+  url?: string;
   id: string;
   at: string;
   kind: string;
@@ -508,6 +509,16 @@ function EventSheet({ events, onClose }: { events: ChartEvent[]; onClose: () => 
                 <p className="mt-2 inline-block rounded-lg bg-white/5 px-2 py-1 text-[11px] font-medium">
                   {markerFor(e).text}
                 </p>
+                {e.url?.startsWith("https://x.com/") && (
+                  <a
+                    href={e.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="ml-2 mt-2 inline-block rounded-lg border border-hodl-cyan/40 px-2 py-1 text-[11px] font-medium text-hodl-cyan"
+                  >
+                    Open post ↗
+                  </a>
+                )}
               </li>
             );
           })}

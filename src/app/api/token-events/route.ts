@@ -39,6 +39,7 @@ export async function GET(request: Request) {
           title: e.title,
           detail: e.detail,
           value: e.value,
+          url: e.url,
         })),
     });
   } catch (e) {

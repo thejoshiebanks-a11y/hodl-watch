@@ -12,7 +12,7 @@ import {
   type AlertRules,
 } from "@/lib/watch/alert-catalog";
 
-const ORDER: AlertCategory[] = ["safety", "liquidity", "market", "holders", "health"];
+const ORDER: AlertCategory[] = ["safety", "liquidity", "market", "holders", "health", "social"];
 
 function fmt(value: number, unit: string): string {
   const tight = unit.startsWith("%") || unit.startsWith("x");

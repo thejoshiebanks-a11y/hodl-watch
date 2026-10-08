@@ -1,4 +1,4 @@
-export type AlertCategory = "safety" | "liquidity" | "market" | "holders" | "health";
+export type AlertCategory = "safety" | "liquidity" | "market" | "holders" | "health" | "social";
 
 export const CATEGORY_LABELS: Record<AlertCategory, string> = {
   safety: "Contract and safety",
@@ -6,6 +6,7 @@ export const CATEGORY_LABELS: Record<AlertCategory, string> = {
   market: "Price and volume",
   holders: "Holders and wallets",
   health: "Health score",
+  social: "X posts from tracked accounts",
 };
 
 export type Threshold = {
@@ -59,6 +60,9 @@ export const ALERT_CATALOG: AlertDef[] = [
 
   { kind: "HEALTH_DROP", label: "Health score falls", category: "health", defaultOn: true, threshold: t("points", 0.5, 5, 0.5, 1) },
   { kind: "HEALTH_RISE", label: "Health score rises", category: "health", defaultOn: false, threshold: t("points", 0.5, 5, 0.5, 1) },
+
+  { kind: "X_POST", label: "Tracked account posts this token's address", category: "social", defaultOn: true },
+  { kind: "X_POST_POSSIBLE", label: "Tracked account posts its $symbol only (unconfirmed)", category: "social", defaultOn: false },
 ];
 
 export type AlertRule = { on?: boolean; min?: number };

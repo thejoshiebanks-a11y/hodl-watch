@@ -9,6 +9,10 @@ export type WatchEvent = {
   detail: string;
   /** How big the change was (always positive), in the unit the alert catalog uses. */
   value?: number;
+  /** Link to the source, such as an X post. */
+  url?: string;
+  /** Keeps the stored event id unique when events share a timestamp and kind. */
+  key?: string;
 };
 
 const RANK: Record<Severity, number> = { critical: 0, warning: 1, info: 2 };

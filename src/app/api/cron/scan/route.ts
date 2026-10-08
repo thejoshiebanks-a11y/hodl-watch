@@ -8,6 +8,7 @@ import { notifyWatchers } from "@/lib/push/notify";
 import { updatePeak } from "@/lib/watch/peaks";
 import { pushHistory } from "@/lib/watch/history";
 import { syncWhaleWebhook } from "@/lib/whale/helius";
+import { scanXPosts } from "@/lib/social/scan";
 
 export const maxDuration = 60;
 export const dynamic = "force-dynamic";
@@ -110,7 +111,14 @@ export async function GET(request: Request) {
     }
   }
 
+  // X posts are checked alongside the scans and never block them.
+  const socialRun = scanXPosts(started + 50_000).catch((e) => {
+    console.error("cron: x scan failed", e);
+    return { ok: false, reason: "error" };
+  });
+
   await Promise.all(Array.from({ length: CONCURRENCY }, worker));
+  const social = await socialRun;
 
   let whale: unknown = null;
   if (Date.now() - started < 52_000) {
@@ -126,6 +134,7 @@ export async function GET(request: Request) {
     watched,
     due: due.length,
     whale,
+    social,
     scanned: results.length,
     events: results.reduce((n, r) => n + r.events, 0),
     ms: Date.now() - started,
