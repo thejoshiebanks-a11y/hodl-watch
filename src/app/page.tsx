@@ -5,6 +5,7 @@ import type { ScanResponse, ScanSuccess } from "@/lib/types/scan";
 import { SolanaMintSchema } from "@/lib/validation/solana";
 import { TokenView } from "@/components/terminal/TokenView";
 import { Landing } from "@/components/landing/Landing";
+import { DataBanner } from "@/components/terminal/DataBanner";
 
 type Data = ScanSuccess["data"];
 
@@ -83,7 +84,10 @@ export default function Home() {
     <main className="min-h-screen overflow-x-hidden text-hodl-text">
       <div className="mx-auto max-w-7xl px-4 py-5 sm:px-8">
         {snapshot ? (
-          <TokenView d={snapshot} onBack={() => setSnapshot(null)} />
+          <>
+            <DataBanner provider={snapshot.market.provider} observedAt={snapshot.market.observedAt} />
+            <TokenView d={snapshot} onBack={() => setSnapshot(null)} />
+          </>
         ) : (
           <Landing mint={mint} setMint={setMint} onScan={scan} loading={loading} error={error} />
         )}
