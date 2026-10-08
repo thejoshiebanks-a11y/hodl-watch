@@ -403,12 +403,15 @@ export function Landing({
             </svg>
             <div className="relative z-10">
               <p className="text-[11px] font-bold uppercase tracking-[0.3em] text-hodl-muted">Token Surveillance</p>
-              <h1 className="mt-3 text-[clamp(24px,7.2vw,29px)] font-black leading-[1.05] tracking-tight">
-                Smarter Scans.
-                <br />
-                <span className="bg-gradient-to-r from-hodl-cyan via-hodl-blue to-violet-400 bg-clip-text text-transparent">
-                  Clearer Evidence.
-                </span>
+              <h1 className="mt-3 text-[clamp(21px,6.2vw,25px)] font-black uppercase leading-[1.08] tracking-[0.06em]">
+                {["Health", "Observe", "Detect", "Live"].map((w) => (
+                  <span key={w} className="block">
+                    <span className="bg-gradient-to-r from-hodl-cyan via-hodl-blue to-violet-400 bg-clip-text text-transparent">
+                      {w[0]}
+                    </span>
+                    <span className="text-white/90">{w.slice(1)}</span>
+                  </span>
+                ))}
               </h1>
               <p className="mt-2.5 max-w-[185px] text-[13.5px] leading-snug text-slate-300/85">
                 Paste a token CA and get an explainable Health score, live data and alerts in one place.
