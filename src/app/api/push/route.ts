@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getRedis } from "@/lib/watch/redis";
-import { SUB_DEVICES, subKey } from "@/lib/push/send";
+import { SUB_DEVICES, cleanupDevice, subKey, subsKey, type StoredSub } from "@/lib/push/send";
 import { DEVICE_ID_PATTERN } from "@/lib/watch/types";
 
 export const dynamic = "force-dynamic";
@@ -38,7 +38,7 @@ export async function POST(request: Request) {
 
   try {
     const redis = getRedis();
-    await redis.set(subKey(id), parsed.data);
+    await redis.hset(subsKey(id), { [parsed.data.endpoint]: parsed.data });
     await redis.sadd(SUB_DEVICES, id);
     return NextResponse.json({ ok: true });
   } catch (e) {
@@ -51,10 +51,21 @@ export async function DELETE(request: Request) {
   const id = device(request);
   if (!id) return NextResponse.json({ error: "invalid_device" }, { status: 400 });
 
+  const body = (await request.json().catch(() => null)) as { endpoint?: unknown } | null;
+  const endpoint = typeof body?.endpoint === "string" ? body.endpoint : null;
+
   try {
     const redis = getRedis();
-    await redis.del(subKey(id));
-    await redis.srem(SUB_DEVICES, id);
+    if (endpoint) {
+      // Only this physical device. Other linked devices keep their alerts.
+      await redis.hdel(subsKey(id), endpoint);
+      const legacy = await redis.get<StoredSub>(subKey(id));
+      if (legacy?.endpoint === endpoint) await redis.del(subKey(id));
+      await cleanupDevice(id);
+    } else {
+      await redis.del(subKey(id), subsKey(id));
+      await redis.srem(SUB_DEVICES, id);
+    }
     return NextResponse.json({ ok: true });
   } catch (e) {
     console.error("push unsubscribe failed:", e);

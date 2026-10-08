@@ -13,7 +13,10 @@ export type StoredSub = {
   keys: { p256dh: string; auth: string };
 };
 
+/** Old single-subscription key. Still read, so existing alerts keep working. */
 export const subKey = (device: string) => `push:${device}`;
+/** One entry per physical device, keyed by its push endpoint. */
+export const subsKey = (device: string) => `pushsubs:${device}`;
 export const SUB_DEVICES = "push:devices";
 
 let ready = false;
@@ -32,6 +35,16 @@ function init(): boolean {
   return true;
 }
 
+/** Removes the device from the alert list once it has no subscriptions left. */
+export async function cleanupDevice(device: string): Promise<void> {
+  const redis = getRedis();
+  const [many, legacy] = await Promise.all([
+    redis.hlen(subsKey(device)),
+    redis.exists(subKey(device)),
+  ]);
+  if (many === 0 && legacy === 0) await redis.srem(SUB_DEVICES, device);
+}
+
 export async function sendPush(
   device: string,
   payload: PushPayload,
@@ -39,23 +52,38 @@ export async function sendPush(
   if (!init()) return "not_configured";
 
   const redis = getRedis();
-  const sub = await redis.get<StoredSub>(subKey(device));
-  if (!sub) return "no_subscription";
+  const [many, legacy] = await Promise.all([
+    redis.hgetall<Record<string, StoredSub>>(subsKey(device)),
+    redis.get<StoredSub>(subKey(device)),
+  ]);
+  const subs = new Map<string, StoredSub>();
+  if (legacy?.endpoint) subs.set(legacy.endpoint, legacy);
+  for (const s of Object.values(many ?? {})) if (s?.endpoint) subs.set(s.endpoint, s);
+  if (subs.size === 0) return "no_subscription";
 
-  try {
-    await webpush.sendNotification(sub, JSON.stringify(payload), {
-      TTL: 3600,
-      urgency: "high",
-    });
-    return "sent";
-  } catch (e) {
-    const code = (e as { statusCode?: number }).statusCode;
-    if (code === 404 || code === 410) {
-      await redis.del(subKey(device));
-      await redis.srem(SUB_DEVICES, device);
-      return "expired";
+  let sent = 0;
+  let expired = 0;
+  let failed = 0;
+  for (const sub of subs.values()) {
+    try {
+      await webpush.sendNotification(sub, JSON.stringify(payload), {
+        TTL: 3600,
+        urgency: "high",
+      });
+      sent++;
+    } catch (e) {
+      const code = (e as { statusCode?: number }).statusCode;
+      if (code === 404 || code === 410) {
+        expired++;
+        await redis.hdel(subsKey(device), sub.endpoint);
+        if (legacy?.endpoint === sub.endpoint) await redis.del(subKey(device));
+      } else {
+        console.error("push failed:", e);
+        failed++;
+      }
     }
-    console.error("push failed:", e);
-    return "failed";
   }
+  if (expired > 0) await cleanupDevice(device);
+  if (sent > 0) return "sent";
+  return failed > 0 ? "failed" : "expired";
 }

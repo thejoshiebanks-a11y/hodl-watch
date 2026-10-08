@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { getDeviceId } from "@/lib/watch/device";
 import { AlertRulesPanel } from "./AlertRulesPanel";
+import { LinkDevice } from "./LinkDevice";
 
 type Mode = "checking" | "unsupported" | "install-ios" | "denied" | "off" | "on";
 
@@ -137,8 +138,13 @@ export function AlertsCard() {
     try {
       const reg = await navigator.serviceWorker.getRegistration("/sw.js");
       const sub = await reg?.pushManager.getSubscription();
+      const endpoint = sub?.endpoint;
       await sub?.unsubscribe();
-      await fetch("/api/push", { method: "DELETE", headers: { "x-device-id": device } });
+      await fetch("/api/push", {
+        method: "DELETE",
+        headers: { "content-type": "application/json", "x-device-id": device },
+        body: JSON.stringify({ endpoint }),
+      });
       setMode("off");
     } catch {
       setNote("Couldn't turn off alerts. Try again.");
@@ -253,6 +259,8 @@ export function AlertsCard() {
       )}
 
       {note && <p className="mt-3 text-xs text-amber-300">{note}</p>}
+
+      <LinkDevice />
     </section>
   );
 }
