@@ -221,6 +221,29 @@ function FeaturedRow({ mint, onScan }: { mint: string; onScan: (m: string) => vo
 }
 
 function FeaturedList({ onScan, onViewAll }: { onScan: (m: string) => void; onViewAll: () => void }) {
+  const [trendTop, setTrendTop] = useState<{ mint: string }[] | null>(null);
+  useEffect(() => {
+    let off = false;
+    (async () => {
+      try {
+        const r = await fetch("/api/trending");
+        const j = await r.json();
+        if (off || !Array.isArray(j.items)) return;
+        const top = (j.items as { mint?: unknown; rank?: number }[])
+          .filter((i): i is { mint: string; rank?: number } => typeof i.mint === "string")
+          .sort((x, y) => (x.rank ?? 99) - (y.rank ?? 99))
+          .slice(0, 3)
+          .map((i) => ({ mint: i.mint }));
+        if (top.length > 0) setTrendTop(top);
+      } catch {
+        /* keep the fallback list */
+      }
+    })();
+    return () => {
+      off = true;
+    };
+  }, []);
+  const picks: { mint: string }[] = trendTop ?? POPULAR.slice(0, 3);
   return (
     <section className="hodl-card p-3">
       <div className="mb-2.5 flex items-center justify-between px-1">
@@ -232,7 +255,7 @@ function FeaturedList({ onScan, onViewAll }: { onScan: (m: string) => void; onVi
         </button>
       </div>
       <div className="space-y-2">
-        {POPULAR.slice(0, 3).map((p) => (
+        {picks.map((p) => (
           <FeaturedRow key={p.mint} mint={p.mint} onScan={onScan} />
         ))}
       </div>
