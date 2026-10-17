@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { getDeviceId } from "@/lib/watch/device";
 import type { StoredEvent } from "@/lib/watch/events";
 import { alertLink } from "@/lib/watch/link";
+import { groupEvents } from "@/lib/watch/group";
 
 const DOT = {
   critical: "bg-rose-400",
@@ -40,6 +41,23 @@ function AlertLink({ url }: { url?: string }) {
     >
       {link.label}
     </a>
+  );
+}
+
+function EventRow({ e, now }: { e: StoredEvent; now: number }) {
+  return (
+    <div className="flex items-start gap-3">
+      <span className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ${DOT[e.severity]}`} />
+      <div className="min-w-0 flex-1">
+        <p className="text-sm font-semibold">{e.title}</p>
+        <p className="mt-0.5 text-xs text-hodl-muted">{e.detail}</p>
+        <AlertLink url={e.url} />
+        <p className="mt-1 text-[10px] uppercase tracking-[0.12em] text-hodl-muted">
+          {e.symbol ? `$${e.symbol} · ` : ""}
+          {LABEL[e.severity]} · {ago(e.at, now)}
+        </p>
+      </div>
+    </div>
   );
 }
 
@@ -80,6 +98,8 @@ export function ObserveFeed() {
     };
   }, []);
 
+  const groups = events ? groupEvents(events) : [];
+
   return (
     <section>
       <p className="mb-3 text-xl font-bold">Observe</p>
@@ -97,22 +117,41 @@ export function ObserveFeed() {
         </div>
       ) : (
         <div className="hodl-card divide-y divide-white/10 overflow-hidden">
-          {events.slice(0, 15).map((e) => (
-            <div key={e.id} className="px-4 py-3">
-              <div className="flex items-start gap-3">
-                <span className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ${DOT[e.severity]}`} />
-                <div className="min-w-0 flex-1">
-                  <p className="text-sm font-semibold">{e.title}</p>
-                  <p className="mt-0.5 text-xs text-hodl-muted">{e.detail}</p>
-                  <AlertLink url={e.url} />
-                  <p className="mt-1 text-[10px] uppercase tracking-[0.12em] text-hodl-muted">
-                    {e.symbol ? `$${e.symbol} · ` : ""}
-                    {LABEL[e.severity]} · {ago(e.at, now)}
-                  </p>
+          {groups.slice(0, 15).map((g) => {
+            if (g.events.length === 1) {
+              return (
+                <div key={g.id} className="px-4 py-3">
+                  <EventRow e={g.events[0]} now={now} />
                 </div>
-              </div>
-            </div>
-          ))}
+              );
+            }
+            const titles = g.events.slice(0, 3).map((e) => e.title).join(" · ");
+            const more = g.events.length - 3;
+            return (
+              <details key={g.id} className="px-4 py-3">
+                <summary className="flex cursor-pointer list-none items-start gap-3">
+                  <span className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ${DOT[g.severity]}`} />
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-semibold">
+                      {g.symbol ? `$${g.symbol}` : "Token"}: {g.events.length} changes
+                    </p>
+                    <p className="mt-0.5 text-xs text-hodl-muted">
+                      {titles}
+                      {more > 0 ? ` · +${more} more` : ""}
+                    </p>
+                    <p className="mt-1 text-[10px] uppercase tracking-[0.12em] text-hodl-muted">
+                      {LABEL[g.severity]} · {ago(g.events[0].at, now)} · tap to expand
+                    </p>
+                  </div>
+                </summary>
+                <div className="mt-3 space-y-3 border-l border-white/10 pl-4">
+                  {g.events.map((e) => (
+                    <EventRow key={e.id} e={e} now={now} />
+                  ))}
+                </div>
+              </details>
+            );
+          })}
         </div>
       )}
     </section>
