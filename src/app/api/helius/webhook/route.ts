@@ -5,6 +5,8 @@ import { getSnapshot, pushEvents } from "@/lib/watch/events";
 import { notifyWatchers } from "@/lib/push/notify";
 import { parseSwaps } from "@/lib/whale/parse";
 import { whaleEvent } from "@/lib/whale/logic";
+import { whaleContextFor } from "@/lib/whale/context";
+import { loadWhaleContext } from "@/lib/whale/context-store";
 
 export const maxDuration = 30;
 export const dynamic = "force-dynamic";
@@ -49,9 +51,11 @@ export async function POST(request: Request) {
       const snap = await getSnapshot(s.mint);
       if (!snap || typeof snap.priceUsd !== "number") continue;
 
+      const stored = await loadWhaleContext(s.mint);
       const e = whaleEvent(
         { side: s.side, usd: s.tokens * snap.priceUsd, wallet: s.wallet },
         snap.liquidityUsd ?? null,
+        whaleContextFor(s.wallet, s.tokens, stored),
       );
       if (!e) continue;
 
