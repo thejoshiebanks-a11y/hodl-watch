@@ -5,6 +5,8 @@ export type Swap = {
   side: "buy" | "sell";
   usd: number;
   wallet: string;
+  /** Transaction signature, used for the Solscan link. */
+  signature?: string;
 };
 
 /** Who the trader is, when we know. Optional, so old callers keep working. */
@@ -22,6 +24,14 @@ const ROLE_NAME: Record<WalletRole, string> = {
   kol: "Reported KOL wallet",
   unknown: "Whale",
 };
+
+const SIGNATURE = /^[1-9A-HJ-NP-Za-km-z]{64,90}$/;
+
+export function solscanUrl(signature: string | undefined): string | undefined {
+  return signature && SIGNATURE.test(signature)
+    ? `https://solscan.io/tx/${signature}`
+    : undefined;
+}
 
 function money(n: number): string {
   if (n >= 1_000_000) return `$${(n / 1_000_000).toFixed(1)}M`;
@@ -57,6 +67,7 @@ export function whaleEvent(
       : null;
 
   const buy = swap.side === "buy";
+  const url = solscanUrl(swap.signature);
   const verb = buy ? "bought" : "sold";
   const critical =
     value >= 20 || (insider && (value >= 10 || (supply ?? 0) >= 1));
@@ -69,5 +80,6 @@ export function whaleEvent(
       `${shortWallet(swap.wallet)} ${verb} ${money(swap.usd)} in one trade, ${value}% of the pool's liquidity` +
       (supply !== null ? `, ${supply}% of supply.` : "."),
     value,
+    ...(url ? { url } : {}),
   };
 }

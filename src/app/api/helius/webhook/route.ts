@@ -53,7 +53,12 @@ export async function POST(request: Request) {
 
       const stored = await loadWhaleContext(s.mint);
       const e = whaleEvent(
-        { side: s.side, usd: s.tokens * snap.priceUsd, wallet: s.wallet },
+        {
+          side: s.side,
+          usd: s.tokens * snap.priceUsd,
+          wallet: s.wallet,
+          signature: s.signature,
+        },
         snap.liquidityUsd ?? null,
         whaleContextFor(s.wallet, s.tokens, stored),
       );
