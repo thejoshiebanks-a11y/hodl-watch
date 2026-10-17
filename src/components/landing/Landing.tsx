@@ -526,7 +526,16 @@ export function Landing({
           <p className="text-hodl-muted">Unavailable data shows as N/A. HODL never guesses.</p>
           <div className="divide-y divide-white/10 text-xs">
             <p className="flex justify-between py-2"><span className="text-hodl-muted">Health model</span><span>v0.1.2</span></p>
-            <p className="flex justify-between py-2"><span className="text-hodl-muted">Watch, Observe, Alerts</span><span>v0.2</span></p>
+            <p className="flex justify-between py-2"><span className="text-hodl-muted">Watch, Observe, Alerts</span><span>v0.4</span></p>
+          </div>
+          <div className="space-y-1.5 pt-1 text-xs">
+            <p className="font-semibold">What’s new in v0.4</p>
+            <ul className="list-disc space-y-1 pl-4 text-hodl-muted">
+              <li>Whale alerts name the wallet: creator, top holder or whale.</li>
+              <li>Several whales trading together become one alert.</li>
+              <li>Whale alerts link straight to the transaction on Solscan.</li>
+              <li>Observe groups repeated alerts for one token into a single card.</li>
+            </ul>
           </div>
         </section>
       )}
