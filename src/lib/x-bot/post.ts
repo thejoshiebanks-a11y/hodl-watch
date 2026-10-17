@@ -9,6 +9,7 @@ export type PostFailure =
   | "forbidden"
   | "duplicate"
   | "rate_limited"
+  | "no_credits"
   | "error";
 
 export type PostResult =
@@ -78,6 +79,7 @@ export async function postReply(o: {
   }
 
   if (res.status === 401) return { ok: false, status: 401, reason: "unauthorized" };
+  if (res.status === 402) return { ok: false, status: 402, reason: "no_credits" };
   if (res.status === 429) return { ok: false, status: 429, reason: "rate_limited" };
   if (res.status === 403) {
     const body = (await res.text().catch(() => "")).toLowerCase();
