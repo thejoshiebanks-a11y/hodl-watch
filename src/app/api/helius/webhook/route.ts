@@ -39,7 +39,7 @@ export async function POST(request: Request) {
   const redis = getRedis();
   let watched: Set<string>;
   try {
-    watched = new Set(await redis.smembers("watched:mints"));
+    watched = new Set<string>((await redis.smembers("watched:mints")) as string[]);
   } catch (err) {
     // Answer 200 so Helius doesn't retry while storage is down.
     console.error("helius webhook: storage unavailable", err);
