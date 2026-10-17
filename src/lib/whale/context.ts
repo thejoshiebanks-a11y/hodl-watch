@@ -51,9 +51,12 @@ export function whaleContextFor(
     creator: stored.creator,
     topHolders: stored.topHolders,
   });
-  const pctOfSupply =
+  const rawPct =
     stored.supply && Number.isFinite(tokens)
       ? (tokens / stored.supply) * 100
       : null;
+  // A trade can't exceed the whole supply; if it seems to, the supply units
+  // are off, so say nothing instead of a wrong number.
+  const pctOfSupply = rawPct !== null && rawPct <= 100 ? rawPct : null;
   return { role, pctOfSupply };
 }
