@@ -509,14 +509,14 @@ function EventSheet({ events, onClose }: { events: ChartEvent[]; onClose: () => 
                 <p className="mt-2 inline-block rounded-lg bg-white/5 px-2 py-1 text-[11px] font-medium">
                   {markerFor(e).text}
                 </p>
-                {e.url?.startsWith("https://x.com/") && (
+                {(e.url?.startsWith("https://x.com/") || e.url?.startsWith("https://solscan.io/tx/")) && (
                   <a
                     href={e.url}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="ml-2 mt-2 inline-block rounded-lg border border-hodl-cyan/40 px-2 py-1 text-[11px] font-medium text-hodl-cyan"
                   >
-                    Open post ↗
+                    {e.url?.startsWith("https://solscan.io/") ? "View tx ↗" : "Open post ↗"}
                   </a>
                 )}
               </li>

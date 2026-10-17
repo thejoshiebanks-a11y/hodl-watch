@@ -3,10 +3,12 @@ import { timingSafeEqual } from "node:crypto";
 import { getRedis } from "@/lib/watch/redis";
 import { getSnapshot, pushEvents } from "@/lib/watch/events";
 import { notifyWatchers } from "@/lib/push/notify";
+import type { WatchEvent } from "@/lib/watch/detect";
 import { parseSwaps } from "@/lib/whale/parse";
 import { whaleEvent } from "@/lib/whale/logic";
 import { whaleContextFor } from "@/lib/whale/context";
 import { loadWhaleContext } from "@/lib/whale/context-store";
+import { trackCluster } from "@/lib/whale/trades-store";
 
 export const maxDuration = 30;
 export const dynamic = "force-dynamic";
@@ -51,23 +53,30 @@ export async function POST(request: Request) {
       const snap = await getSnapshot(s.mint);
       if (!snap || typeof snap.priceUsd !== "number") continue;
 
+      const usd = s.tokens * snap.priceUsd;
+      const liquidity = snap.liquidityUsd ?? null;
       const stored = await loadWhaleContext(s.mint);
+
+      const found: WatchEvent[] = [];
       const e = whaleEvent(
-        {
-          side: s.side,
-          usd: s.tokens * snap.priceUsd,
-          wallet: s.wallet,
-          signature: s.signature,
-        },
-        snap.liquidityUsd ?? null,
+        { side: s.side, usd, wallet: s.wallet, signature: s.signature },
+        liquidity,
         whaleContextFor(s.wallet, s.tokens, stored),
       );
-      if (!e) continue;
+      if (e) found.push(e);
 
-      await pushEvents(s.mint, snap.symbol, s.at, [e]);
-      events++;
+      const cluster = await trackCluster(
+        s.mint,
+        { side: s.side, usd, wallet: s.wallet, at: Date.parse(s.at) },
+        liquidity,
+      );
+      if (cluster) found.push(cluster);
+      if (found.length === 0) continue;
+
+      await pushEvents(s.mint, snap.symbol, s.at, found);
+      events += found.length;
       try {
-        await notifyWatchers(s.mint, snap.symbol, [e]);
+        await notifyWatchers(s.mint, snap.symbol, found);
       } catch (err) {
         console.error("helius webhook: notify failed for", s.mint, err);
       }
