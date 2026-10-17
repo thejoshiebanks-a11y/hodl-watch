@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { getDeviceId } from "@/lib/watch/device";
 import type { StoredEvent } from "@/lib/watch/events";
+import { alertLink } from "@/lib/watch/link";
 
 const DOT = {
   critical: "bg-rose-400",
@@ -25,6 +26,21 @@ function ago(iso: string, now: number): string {
   const h = Math.round(m / 60);
   if (h < 48) return `${h}h ago`;
   return `${Math.round(h / 24)}d ago`;
+}
+
+function AlertLink({ url }: { url?: string }) {
+  const link = alertLink(url);
+  if (!link) return null;
+  return (
+    <a
+      href={link.href}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="mt-1.5 inline-block rounded-lg border border-hodl-cyan/40 px-2 py-1 text-[11px] font-medium text-hodl-cyan"
+    >
+      {link.label}
+    </a>
+  );
 }
 
 export function ObserveFeed() {
@@ -88,6 +104,7 @@ export function ObserveFeed() {
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-semibold">{e.title}</p>
                   <p className="mt-0.5 text-xs text-hodl-muted">{e.detail}</p>
+                  <AlertLink url={e.url} />
                   <p className="mt-1 text-[10px] uppercase tracking-[0.12em] text-hodl-muted">
                     {e.symbol ? `$${e.symbol} · ` : ""}
                     {LABEL[e.severity]} · {ago(e.at, now)}
