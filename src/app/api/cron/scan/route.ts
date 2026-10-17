@@ -8,6 +8,8 @@ import { notifyWatchers } from "@/lib/push/notify";
 import { updatePeak } from "@/lib/watch/peaks";
 import { pushHistory } from "@/lib/watch/history";
 import { syncWhaleWebhook } from "@/lib/whale/helius";
+import { buildWhaleContext } from "@/lib/whale/from-identity";
+import { saveWhaleContext } from "@/lib/whale/context-store";
 import { scanXPosts } from "@/lib/social/scan";
 import { detectPostedCa } from "@/lib/social/posted";
 
@@ -44,6 +46,9 @@ async function processMint(
   await updatePeak(mint, curr.priceUsd, curr.liquidityUsd, curr.at);
   const pool = outcome.data.market.pairAddress;
   if (pool) await getRedis().set(`pool:${mint}`, pool);
+  // Remember who the creator and top holders are so whale alerts can name them.
+  const whaleCtx = buildWhaleContext(outcome.data.identity);
+  if (whaleCtx) await saveWhaleContext(mint, whaleCtx).catch(() => {});
   const found = prev ? detectEvents(prev, curr) : [];
   // Did the token's own X account just post its address? Never blocks the scan.
   const posted = await detectPostedCa(mint, outcome.data.market.socials).catch(() => null);

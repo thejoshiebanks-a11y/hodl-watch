@@ -46,6 +46,7 @@ const RugcheckResponseSchema = z.object({
       mintAuthority: z.string().nullable().optional(),
       freezeAuthority: z.string().nullable().optional(),
       supply: z.number().nullable().optional(),
+      decimals: z.number().nullable().optional(),
     })
     .nullable()
     .optional(),
@@ -192,6 +193,11 @@ export async function getRugcheckIdentity(
   const largestPool = [...pools].sort((a, b) => b.usd - a.usd)[0];
 
   const supply = parsed.token?.supply ?? null;
+  const decimals = parsed.token?.decimals ?? null;
+  const supplyUi =
+    supply !== null && supply > 0 && decimals !== null && decimals >= 0 && decimals <= 18
+      ? supply / 10 ** decimals
+      : null;
 
   const insiderHolding = (parsed.insiderNetworks ?? []).reduce(
     (sum, network) => sum + (network.currentHolding ?? 0),
@@ -208,6 +214,7 @@ export async function getRugcheckIdentity(
     topHolders,
     holderCount: parsed.totalHolders ?? null,
     creatorBalance: parsed.creatorBalance ?? null,
+    supplyUi,
     rugged: parsed.rugged ?? null,
     launchpad: parsed.launchpad?.platform ?? parsed.launchpad?.name ?? null,
     tokenDetectedAt: isoOrNull(parsed.detectedAt),

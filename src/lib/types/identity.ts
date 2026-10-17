@@ -18,6 +18,8 @@ export type TokenIdentitySnapshot = {
   topHolders: TokenHolder[];
   holderCount: number | null;
   creatorBalance: number | null;
+  /** Total supply in whole tokens (raw supply divided by 10^decimals). */
+  supplyUi?: number | null;
   rugged: boolean | null;
   launchpad: string | null;
   tokenDetectedAt: string | null;
