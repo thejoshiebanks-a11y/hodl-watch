@@ -34,6 +34,7 @@ const base: ReplyInput = {
   buys24h: 410,
   sells24h: 380,
   flags: ["Low Liquidity", "Creator holds 5"],
+  cap: null,
 };
 
 describe("verdict", () => {

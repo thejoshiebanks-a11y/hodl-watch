@@ -24,6 +24,7 @@ export type ReplyInput = {
   buys24h: number | null;
   sells24h: number | null;
   flags: string[];
+  cap: { max: number; reason: string } | null;
 };
 
 export const MAX_REPLY = 280;
@@ -48,6 +49,23 @@ export function safeFlag(raw: string): string {
     .replace(/\s+/g, " ")
     .trim()
     .slice(0, 28);
+}
+
+/** First sentence of the cap reason, cleaned of anything that could be a link or mention. */
+export function capLine(
+  cap: { max: number; reason: string } | null,
+): string | null {
+  if (!cap) return null;
+  const first = cap.reason.split(/(?<=\.)\s/)[0] ?? "";
+  const clean = first
+    .replace(/[^A-Za-z0-9 %$,'.-]/g, "")
+    .replace(/(?<=[A-Za-z])\.(?=[A-Za-z])/g, "")
+    .replace(/\s+/g, " ")
+    .trim()
+    .replace(/\.$/, "");
+  if (clean.length === 0) return null;
+  const text = clean.length > 90 ? `${clean.slice(0, 89).trimEnd()}…` : clean;
+  return `Capped at ${cap.max.toFixed(1)}: ${text}`;
 }
 
 export function xLength(text: string): number {
@@ -102,6 +120,15 @@ export function toReplyInput(data: ScanSuccess["data"]): ReplyInput {
     ),
   ].slice(0, 2);
 
+  // Only mention a cap when it actually lowered the score.
+  const binding = health.caps?.[0] ?? null;
+  const lowered =
+    typeof health.score === "number" &&
+    typeof health.uncappedScore === "number" &&
+    health.uncappedScore - health.score > 0.05;
+  const cap =
+    binding && lowered ? { max: binding.max, reason: binding.reason } : null;
+
   const h24 = market.periods.h24;
   return {
     symbol: market.symbol,
@@ -123,6 +150,7 @@ export function toReplyInput(data: ScanSuccess["data"]): ReplyInput {
     buys24h: h24.buys,
     sells24h: h24.sells,
     flags,
+    cap,
   };
 }
 
@@ -142,7 +170,9 @@ export function formatReply(
     `${sym ? `$${sym}` : "This token"} Health ${score}${v ? ` ${v}` : ""}` +
     ` (${input.scored}/${input.available} checks${input.partial ? ", partial data" : ""})`;
 
+  const why = capLine(input.cap);
   const optional = [
+    ...(why ? [why] : []),
     `Liq ${usd(input.liquidityUsd)} · MC ${usd(input.marketCapUsd)} · Age ${age(input.ageHours)}`,
     `Mint ${authority(input.mintAuthority)} · Freeze ${authority(input.freezeAuthority)} · LP locked ${pct(input.lpLockedPct)}`,
     `Top holder ${pct(input.topHolderPct)} · Holders ${compact(input.holderCount)} · Insiders ${pct(input.insiderSupplyPct)}`,
