@@ -5,7 +5,7 @@ import { getSnapshot, pushEvents } from "@/lib/watch/events";
 import { notifyWatchers } from "@/lib/push/notify";
 import type { WatchEvent } from "@/lib/watch/detect";
 import { parseSwaps } from "@/lib/whale/parse";
-import { whaleEvent } from "@/lib/whale/logic";
+import { whaleEvent, MIN_WHALE_USD } from "@/lib/whale/logic";
 import { whaleContextFor } from "@/lib/whale/context";
 import { loadWhaleContext } from "@/lib/whale/context-store";
 import { trackCluster } from "@/lib/whale/trades-store";
@@ -37,7 +37,14 @@ export async function POST(request: Request) {
   }
 
   const redis = getRedis();
-  const watched = new Set(await redis.smembers("watched:mints"));
+  let watched: Set<string>;
+  try {
+    watched = new Set<string>((await redis.smembers("watched:mints")) as string[]);
+  } catch (err) {
+    // Answer 200 so Helius doesn't retry while storage is down.
+    console.error("helius webhook: storage unavailable", err);
+    return NextResponse.json({ received: 0, swaps: 0, events: 0, error: "storage_unavailable" });
+  }
   const swaps = parseSwaps(body, watched).slice(0, MAX_SWAPS_PER_CALL);
 
   let events = 0;
@@ -54,6 +61,7 @@ export async function POST(request: Request) {
       if (!snap || typeof snap.priceUsd !== "number") continue;
 
       const usd = s.tokens * snap.priceUsd;
+      if (!(usd >= MIN_WHALE_USD)) continue; // small trades never need more Redis calls
       const liquidity = snap.liquidityUsd ?? null;
       const stored = await loadWhaleContext(s.mint);
 

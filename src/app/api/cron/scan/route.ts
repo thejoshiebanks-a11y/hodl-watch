@@ -48,7 +48,10 @@ async function processMint(
   if (pool) await getRedis().set(`pool:${mint}`, pool);
   // Remember who the creator and top holders are so whale alerts can name them.
   const whaleCtx = buildWhaleContext(outcome.data.identity);
-  if (whaleCtx) await saveWhaleContext(mint, whaleCtx).catch(() => {});
+  // Holders change slowly: save once per 30 minutes, not on every scan.
+  if (whaleCtx && Math.floor(Date.now() / 300_000) % 6 === 0) {
+    await saveWhaleContext(mint, whaleCtx).catch(() => {});
+  }
   const found = prev ? detectEvents(prev, curr) : [];
   // Did the token's own X account just post its address? Never blocks the scan.
   const posted = await detectPostedCa(mint, outcome.data.market.socials).catch(() => null);
