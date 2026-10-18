@@ -133,8 +133,9 @@ export function toReplyInput(data: ScanSuccess["data"]): ReplyInput {
   return {
     symbol: market.symbol,
     score: health.score,
-    scored: health.scoredFactors,
-    available: health.availableFactors,
+    // Same count the app shows: observed checks out of all checks.
+    scored: (data.factors ?? []).filter((f) => f.status === "AVAILABLE").length,
+    available: (data.factors ?? []).length,
     partial: health.partial || health.missingCritical,
     liquidityUsd: market.liquidityUsd,
     marketCapUsd: market.marketCapUsd,
